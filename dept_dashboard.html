@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Improvement Control Tower</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <script src="/js/chart.umd.js"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', system-ui, sans-serif; }
+        
+        .chart-wrapper { position: relative; width: 100%; height: 280px; }
+        .insight-card { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); background: #fff; height: 100%; display: flex; flex-direction: column;}
+        .gauge-container { position: relative; height: 150px; display: flex; align-items: center; justify-content: center; margin-top: 10px;}
+        .gauge-text { position: absolute; top: 55%; text-align: center; width: 100%; }
+        .ai-conclusion { background: rgba(13, 110, 253, 0.05); padding: 10px; border-radius: 4px; font-size: 0.85rem; margin-top: auto;}
+    </style>
+</head>
+<body class="pb-5">
+
+    <div class="container-fluid mt-4 px-4">
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-tower-observation text-primary me-2"></i> Improvement Control Tower</h4>
+                <small class="text-secondary fw-semibold">Digital Analytics, Triage & Genba Target</small>
+            </div>
+            <a href="HUB.html" class="btn btn-dark shadow-sm"><i class="fa-solid fa-house me-1"></i> Kembali ke Home</a>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ROW 1: 3 EXECUTIVE INSIGHTS (AI WOW FACTOR) -->
+        <!-- ========================================== -->
+        <div class="row g-3 mb-4">
+            <!-- INSIGHT 1: RUN RATE -->
+            <div class="col-lg-4">
+                <div class="insight-card border-top border-primary border-4 p-3">
+                    <h6 class="fw-bold mb-0 text-muted small text-uppercase">01. Prediksi Target 200 Kaizen</h6>
+                    <div class="gauge-container">
+                        <canvas id="runRateChart"></canvas>
+                        <div class="gauge-text"><h3 class="fw-black text-dark mb-0" id="predictValue">0</h3></div>
+                    </div>
+                    <div class="d-flex justify-content-between px-2 mt-2 border-top pt-2 mb-3">
+                        <div><small class="text-muted d-block" style="font-size:10px;">Aktual</small><span class="fw-bold text-primary" id="currentKaizen">0</span></div>
+                        <div class="text-end"><small class="text-muted d-block" style="font-size:10px;">Kecepatan</small><span class="fw-bold text-dark"><span id="rateValue">0</span> <small>/hari</small></span></div>
+                    </div>
+                    <div class="ai-conclusion border-start border-primary border-4" id="runRateConclusion"></div>
+                </div>
+            </div>
+            <!-- INSIGHT 2: CONVERSION -->
+            <div class="col-lg-4">
+                <div class="insight-card border-top border-warning border-4 p-3">
+                    <h6 class="fw-bold mb-3 text-muted small text-uppercase">02. Kualitas Konversi Kaizen (Triage)</h6>
+                    <div class="chart-wrapper" style="height: 180px;"><canvas id="funnelChart"></canvas></div>
+                    <div class="ai-conclusion mt-3 border-start border-warning border-4 bg-warning bg-opacity-10" id="conversionConclusion"></div>
+                </div>
+            </div>
+            <!-- INSIGHT 3: BOTTLENECK -->
+            <div class="col-lg-4">
+                <div class="insight-card border-top border-danger border-4 p-3">
+                    <h6 class="fw-bold mb-3 text-muted small text-uppercase">03. Analisis Tunggakan (SLA Open)</h6>
+                    <div class="chart-wrapper" style="height: 180px;"><canvas id="bottleneckChart"></canvas></div>
+                    <div class="ai-conclusion mt-3 border-start border-danger border-4 bg-danger bg-opacity-10" id="bottleneckConclusion"></div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="text-muted opacity-25 mb-4">
+
+        <!-- FILTER BULAN & TAHUN -->
+        <div class="card border-0 shadow-sm mb-4 rounded-4">
+            <div class="card-body px-4 py-3 d-flex align-items-center gap-3">
+                <label class="fw-bold mb-0 text-dark"><i class="fa-solid fa-calendar-day text-primary me-2"></i>Periode Analisis:</label>
+                <select id="monthFilter" class="form-select w-auto fw-semibold text-primary"></select>
+                <select id="yearFilter" class="form-select w-auto fw-semibold text-primary"></select>
+                <button onclick="loadDashboard()" class="btn btn-primary fw-bold shadow-sm px-4"><i class="fa-solid fa-magnifying-glass me-1"></i> Terapkan</button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ROW 2: SUMMARY CARDS (SKT & 200 KAIZEN)    -->
+        <!-- ========================================== -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card border-start border-info border-4 shadow-sm h-100 rounded-4">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold text-muted mb-1 text-uppercase small">SKT Team Achievement</h6>
+                            <h3 class="fw-bold text-dark mb-0" id="sktAchieve">0</h3>
+                        </div>
+                        <span class="badge bg-info text-dark px-3 py-2 fs-6 shadow-sm">Target: Min. 101</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-start border-warning border-4 shadow-sm h-100 rounded-4">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold text-muted mb-1 text-uppercase small">200 Kaizen Achievement</h6>
+                            <h3 class="fw-bold text-dark mb-0" id="kaizenAchieve">0</h3>
+                        </div>
+                        <span class="badge bg-warning text-dark px-3 py-2 fs-6 shadow-sm">Target: Over 200</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ROW 3: TARGET IMPROVEMENT TRACKING TABLE   -->
+        <!-- ========================================== -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-dark text-white pt-3 pb-2 px-4 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="fa-solid fa-bullseye me-2 text-warning"></i>Target Improvement Tracking</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                    <thead class="table-light text-muted text-uppercase" style="font-size: 11px;">
+                        <tr><th class="ps-4">Section</th><th class="text-center">Target Improvement</th><th class="text-center">Total Aktual</th><th class="text-center">Surplus / Gap</th></tr>
+                    </thead>
+                    <tbody id="targetTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ROW 4: CHARTS (CUMULATIVE & DEPT)          -->
+        <!-- ========================================== -->
+        <div class="row g-4 mb-4">
+            <!-- 200 KAIZEN -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow h-100 rounded-4 overflow-hidden">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
+                        <div><h5 class="fw-bold text-dark mb-0">Road to 200 Kaizen</h5><small class="text-muted">Pencapaian Akumulatif Harian</small></div>
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3 d-flex justify-content-center" style="width:45px;height:45px;"><i class="fa-solid fa-rocket fs-5"></i></div>
+                    </div>
+                    <div class="card-body px-4 pb-4"><div class="chart-wrapper"><canvas id="kaizen200Chart"></canvas></div></div>
+                </div>
+            </div>
+            <!-- SKT -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow h-100 rounded-4 overflow-hidden">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
+                        <div><h5 class="fw-bold text-dark mb-0">SKT Improvement Target</h5><small class="text-muted">Pencapaian Dept. Internal</small></div>
+                        <div class="bg-success bg-opacity-10 text-success rounded-circle p-3 d-flex justify-content-center" style="width:45px;height:45px;"><i class="fa-solid fa-seedling fs-5"></i></div>
+                    </div>
+                    <div class="card-body px-4 pb-4"><div class="chart-wrapper"><canvas id="sktChart"></canvas></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEPT PERFORMANCE -->
+        <div class="card border-0 shadow rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
+                <div><h5 class="fw-bold text-dark mb-0">Kinerja Penyelesaian Kaizen per Departemen</h5><small class="text-muted">Outstanding Open vs Closed Bulan Ini</small></div>
+                <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-3 d-flex justify-content-center" style="width:45px;height:45px;"><i class="fa-solid fa-users-gear fs-5"></i></div>
+            </div>
+            <div class="card-body px-4 pb-4"><div class="chart-wrapper" style="height:320px;"><canvas id="deptPerformanceChart"></canvas></div></div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ROW 5: TRIAGE TABLE                        -->
+        <!-- ========================================== -->
+        <div class="card border-0 shadow rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-filter text-warning me-2"></i> Menunggu Keputusan Filter (Triage)</h6>
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3 py-2">Aksi Diperlukan</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light"><tr><th class="ps-4">Tanggal Masuk</th><th>Seksi Tujuan</th><th>Deskripsi Temuan</th><th class="text-center pe-4">Tindakan Cepat</th></tr></thead>
+                        <tbody id="triageTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+        let charts = {};
+        const bulanIndo = {1:'Januari', 2:'Februari', 3:'Maret', 4:'April', 5:'Mei', 6:'Juni', 7:'Juli', 8:'Agustus', 9:'September', 10:'Oktober', 11:'November', 12:'Desember'};
+
+        window.onload = () => {
+            const today = new Date();
+            const mSelect = document.getElementById('monthFilter');
+            for(let i=1; i<=12; i++) mSelect.add(new Option(bulanIndo[i], i, false, i === today.getMonth()+1));
+            loadDashboard();
+        };
+
+        async function loadDashboard() {
+            const yParam = document.getElementById('yearFilter').value || new Date().getFullYear();
+            const mParam = document.getElementById('monthFilter').value || new Date().getMonth()+1;
+
+            try {
+                const res = await fetch(`/api/dept-dashboard-full?year=${yParam}&month=${mParam}`);
+                const result = await res.json();
+                if(result.status !== 'success') return;
+                
+                const d = result.data;
+
+                // Update Dropdown Tahun
+                const ySelect = document.getElementById('yearFilter');
+                if(ySelect.options.length === 0) result.availableYears.forEach(y => ySelect.add(new Option(y, y, false, y == result.year)));
+
+                // 1. Render AI Insights
+                renderInsights(d.insights);
+
+                // 2. Render Target Table & Summary
+                document.getElementById('sktAchieve').innerText = d.cum_skt;
+                document.getElementById('kaizenAchieve').innerText = d.cum_200;
+                
+                let tHTML = '', gTarg=0, gTot=0;
+                d.targets.forEach(row => {
+                    const surplus = row.total - row.target;
+                    gTarg += row.target; gTot += row.total;
+                    tHTML += `<tr style="${surplus>0?'background-color:#f8fff9;':''}"><td class="ps-4 fw-semibold">${row.section}</td><td class="text-center">${row.target}</td><td class="text-center fw-bold fs-6">${row.total}</td><td class="text-center ${surplus>0?'text-success fw-bold':'text-muted'}">${surplus>0?'+'+surplus:surplus}</td></tr>`;
+                });
+                tHTML += `<tr class="table-dark"><td class="ps-4 fw-bold">GRAND TOTAL</td><td class="text-center fw-bold fs-6">${gTarg}</td><td class="text-center fw-bold fs-6 text-warning">${gTot}</td><td class="text-center fw-bold fs-6 text-success">+${gTot-gTarg}</td></tr>`;
+                document.getElementById('targetTableBody').innerHTML = tHTML;
+
+                // 3. Render Triage Table
+                let trHTML = '';
+                if(d.pending.length > 0) {
+                    d.pending.forEach(p => {
+                        trHTML += `<tr><td class="ps-4"><span class="badge bg-secondary bg-opacity-10 text-secondary border">${p.created_at.split('T')[0]}</span></td><td><span class="fw-bold">${p.section_name}</span></td><td class="text-wrap text-muted" style="max-width:350px;font-size:13px;">${p.problem_description}</td><td class="text-center pe-4"><button onclick="aksiTriage(${p.id}, 'approve')" class="btn btn-sm btn-success fw-bold px-3"><i class="fa-solid fa-check me-1"></i> Kaizen</button> <button onclick="aksiTriage(${p.id}, 'reject')" class="btn btn-sm btn-outline-danger fw-bold px-3"><i class="fa-solid fa-xmark me-1"></i> Tolak</button></td></tr>`;
+                    });
+                } else trHTML = '<tr><td colspan="4" class="text-center py-4 text-muted"><i class="fa-solid fa-face-smile fs-1 text-success opacity-50 mb-2"></i><br>Area bersih, tidak ada antrean.</td></tr>';
+                document.getElementById('triageTableBody').innerHTML = trHTML;
+
+                // 4. Render Chart.js
+                renderCharts(d);
+
+            } catch (err) { console.error(err); }
+        }
+
+        async function aksiTriage(id, action) {
+            try {
+                await fetch('/api/dept-dashboard/triage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ finding_id: id, action: action }) });
+                loadDashboard();
+            } catch(err) { alert(err.message); }
+        }
+
+        // --- FUNGSI RENDER INSIGHTS ---
+        function renderInsights(ins) {
+            document.getElementById('predictValue').innerText = ins.runRate.predicted;
+            document.getElementById('currentKaizen').innerText = ins.runRate.current;
+            document.getElementById('rateValue').innerText = ins.runRate.rate;
+            let rrColor = '#198754', rrMsg = `Tren aman. Target Kaizen bulan ini diprediksi tercapai.`;
+            if(ins.runRate.predicted < ins.runRate.target) { rrColor = '#dc3545'; document.getElementById('predictValue').classList.add('text-danger'); rrMsg = `Pabrik diprediksi defisit ${ins.runRate.target - ins.runRate.predicted} Kaizen!`; }
+            document.getElementById('runRateConclusion').innerHTML = `<b>AI:</b> ${rrMsg}`;
+            initChart('runRateChart', 'doughnut', { labels: ['Prediksi', 'Kurang'], datasets: [{ data: [ins.runRate.predicted, Math.max(0, ins.runRate.target - ins.runRate.predicted)], backgroundColor: [rrColor, '#e9ecef'], borderWidth: 0, circumference: 180, rotation: 270 }] }, { cutout: '75%', plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false });
+
+            const missed = ins.conversion.critical - ins.conversion.converted;
+            document.getElementById('conversionConclusion').innerHTML = `<b>AI:</b> ${missed} Temuan Kritis ditolak/ditutup tanpa menjadi proyek Kaizen (SOP).`;
+            initChart('funnelChart', 'bar', { labels: ['Total', 'Kritis', 'Kaizen'], datasets: [{ data: [ins.conversion.total, ins.conversion.critical, ins.conversion.converted], backgroundColor: ['#0d6efd', '#ffc107', '#198754'], borderRadius: 4 }] }, { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { display: false } } }, responsive: true, maintainAspectRatio: false });
+
+            const bKeys = Object.keys(ins.bottlenecks);
+            let worstDept = '-', maxChronic = -1;
+            bKeys.forEach(k => { if (ins.bottlenecks[k].chronic > maxChronic) { maxChronic = ins.bottlenecks[k].chronic; worstDept = k; }});
+            document.getElementById('bottleneckConclusion').innerHTML = maxChronic > 0 ? `<b>AI:</b> <b>${worstDept}</b> menunggak ${maxChronic} Kaizen lebih dari 30 Hari.` : `<b>AI:</b> Area aman. Tidak ada tunggakan > 30 hari.`;
+            initChart('bottleneckChart', 'bar', { labels: bKeys, datasets: [ { label: '>30 Hr', data: bKeys.map(k=>ins.bottlenecks[k].chronic), backgroundColor: '#dc3545' }, { label: '15-30 Hr', data: bKeys.map(k=>ins.bottlenecks[k].warning), backgroundColor: '#ffc107' }] }, { plugins: { legend: { position: 'bottom', labels: {boxWidth:10} } }, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } }, responsive: true, maintainAspectRatio: false });
+        }
+
+        // --- FUNGSI RENDER GRAFIK LAMA PHP ---
+        function renderCharts(d) {
+            const chartOpt = (yMax) => ({ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8, font: { weight: 'bold' } } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: '#f8f9fa', borderDash: [5, 5] }, beginAtZero: true, suggestedMax: yMax } }, elements: { line: { tension: 0.4 }, point: { radius: 0, hitRadius: 10, hoverRadius: 6, borderWidth: 3 } } });
+            
+            // 200 Kaizen Cumulative
+            let ctx200 = document.getElementById('kaizen200Chart').getContext('2d');
+            let grad200 = ctx200.createLinearGradient(0,0,0,300); grad200.addColorStop(0, 'rgba(13,110,253,0.4)'); grad200.addColorStop(1, 'rgba(13,110,253,0)');
+            initChart('kaizen200Chart', 'line', { labels: d.chartData.labels, datasets: [ { label: 'Aktual', data: d.chartData.actual200, borderColor: '#0d6efd', backgroundColor: grad200, borderWidth: 4, fill: true, pointBackgroundColor: '#fff', pointBorderColor: '#0d6efd' }, { label: 'Target', data: d.chartData.target200, borderColor: '#adb5bd', borderWidth: 2, borderDash: [6, 6], fill: false, pointRadius: 0 } ] }, chartOpt(220));
+
+            // SKT Cumulative
+            let ctxSkt = document.getElementById('sktChart').getContext('2d');
+            let gradSkt = ctxSkt.createLinearGradient(0,0,0,300); gradSkt.addColorStop(0, 'rgba(32,201,151,0.4)'); gradSkt.addColorStop(1, 'rgba(32,201,151,0)');
+            initChart('sktChart', 'line', { labels: d.chartData.labels, datasets: [ { label: 'Aktual', data: d.chartData.actualSKT, borderColor: '#20c997', backgroundColor: gradSkt, borderWidth: 4, fill: true, pointBackgroundColor: '#fff', pointBorderColor: '#20c997' }, { label: 'Target', data: d.chartData.targetSKT, borderColor: '#adb5bd', borderWidth: 2, borderDash: [6, 6], fill: false, pointRadius: 0 } ] }, chartOpt(120));
+
+            // Dept Performance
+            initChart('deptPerformanceChart', 'bar', { labels: d.deptPerformance.map(r=>r.section_name), datasets: [ { label: 'Masih Open', data: d.deptPerformance.map(r=>r.total_open), backgroundColor: 'rgba(220, 53, 69, 0.85)', borderColor: '#dc3545', borderWidth: 1, borderRadius: 4 }, { label: 'Closed', data: d.deptPerformance.map(r=>r.total_closed), backgroundColor: 'rgba(25, 135, 84, 0.85)', borderColor: '#198754', borderWidth: 1, borderRadius: 4 } ] }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }, y: { beginAtZero: true, grid: { color: '#f8f9fa', borderDash: [5, 5] }, ticks: { stepSize: 1 } } } });
+        }
+
+        function initChart(id, type, data, options) {
+            if (charts[id]) charts[id].destroy();
+            charts[id] = new Chart(document.getElementById(id), { type, data, options });
+        }
+    </script>
+</body>
+</html>

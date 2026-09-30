@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Analytics - S.I.N.A.P.S</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <script src="/js/chart.umd.js"></script>
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .chart-wrapper { position: relative; height: 260px; width: 100%; } 
+        
+        .insight-card { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); background: #fff; height: 100%; display: flex; flex-direction: column;}
+        .kpi-card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s; }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .rank-badge { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        
+        .ai-conclusion { background: rgba(13, 110, 253, 0.05); padding: 15px; border-radius: 8px; font-size: 0.85rem; margin-top: auto;}
+    </style>
+</head>
+<body class="pb-5">
+
+    <div class="container-fluid mt-4 px-4">
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold text-dark mb-0"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Dashboard Analisis Temuan</h4>
+                <p class="text-muted mb-0 mt-1 small">Executive Patrol Insights & Text Mining</p>
+            </div>
+            <a href="HUB.html" class="btn btn-dark shadow-sm"><i class="fa-solid fa-arrow-left me-1"></i> Hub Utama</a>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ROW 1: 3 NEW PATROL INSIGHTS               -->
+        <!-- ========================================== -->
+        <div class="row g-3 mb-4">
+            <!-- INSIGHT 1: AI RECURRING -->
+            <div class="col-lg-4">
+                <div class="insight-card border-top border-danger border-4 p-4 position-relative overflow-hidden">
+                    <span class="position-absolute top-0 end-0 mt-3 me-3 badge bg-danger pulse-anim">AI ACTIVE</span>
+                    <h6 class="fw-bold mb-3 text-muted small text-uppercase"><i class="fa-solid fa-brain text-danger me-1"></i> Top Recurring Offender</h6>
+                    
+                    <div id="aiRecurringContent" class="mt-2">
+                        <div class="spinner-border text-danger spinner-border-sm" role="status"></div> Memindai teks...
+                    </div>
+                </div>
+            </div>
+
+            <!-- INSIGHT 2: RED ZONE HOTSPOT -->
+            <div class="col-lg-4">
+                <div class="insight-card border-top border-warning border-4 p-4">
+                    <h6 class="fw-bold mb-3 text-muted small text-uppercase"><i class="fa-solid fa-fire text-warning me-1"></i> Red Zone Hotspot (Safety/Quality)</h6>
+                    
+                    <div class="text-center mt-2 mb-3">
+                        <h2 class="fw-black text-dark mb-0" id="hotspotName">-</h2>
+                        <span class="badge bg-warning text-dark mt-2" style="font-size: 14px;"><span id="hotspotCount">0</span> Temuan Kritis</span>
+                    </div>
+                    
+                    <div class="ai-conclusion mt-3 border-start border-warning border-4 bg-warning bg-opacity-10 text-dark">
+                        <b>Analisis:</b> Area ini adalah penyumbang masalah <i>Safety & Quality</i> terbesar tahun ini. Perlu inspeksi mendalam (Genba Walk) dari Manajemen!
+                    </div>
+                </div>
+            </div>
+
+            <!-- INSIGHT 3: SAFETY SLA -->
+            <div class="col-lg-4">
+                <div class="insight-card border-top border-info border-4 p-4">
+                    <h6 class="fw-bold mb-3 text-muted small text-uppercase"><i class="fa-solid fa-stopwatch text-info me-1"></i> Waktu Respons Isu Kritis</h6>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-2 mb-3 px-3">
+                        <div class="text-center">
+                            <h2 class="fw-black text-danger mb-0" id="slaCritical">0</h2>
+                            <small class="text-muted fw-bold text-uppercase" style="font-size: 10px;">Hari (Safety/QC)</small>
+                        </div>
+                        <div class="border-start h-100 mx-3"></div>
+                        <div class="text-center">
+                            <h3 class="fw-bold text-secondary mb-0" id="slaNormal">0</h3>
+                            <small class="text-muted fw-bold text-uppercase" style="font-size: 10px;">Hari (Biasa)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="ai-conclusion mt-3 border-start border-info border-4 bg-info bg-opacity-10" id="slaConclusion">
+                        Membandingkan kecepatan...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="text-muted opacity-25 mb-4">
+
+        <!-- FILTER TAHUN -->
+        <div class="d-flex align-items-center gap-3 mb-4 bg-white p-3 rounded shadow-sm">
+            <label class="fw-bold mb-0 text-dark"><i class="fa-solid fa-filter text-secondary me-1"></i> Tahun Data Historis:</label>
+            <select id="yearFilter" class="form-select w-auto fw-bold text-primary" onchange="loadAllData(this.value)"></select>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ROW 2: 8 KPI CARDS (DARI VERSI PHP)        -->
+        <!-- ========================================== -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-4" id="kpiContainer">
+            <!-- Akan diisi otomatis oleh JS -->
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ROW 3: CHARTS & LISTS                      -->
+        <!-- ========================================== -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm h-100 p-3">
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-column text-primary me-2"></i> Komposisi Temuan per Seksi</h6>
+                    <div class="chart-wrapper"><canvas id="stackedSectionChart"></canvas></div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100 p-3">
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie text-danger me-2"></i> Rasio Kategori Temuan</h6>
+                    <div class="chart-wrapper"><canvas id="doughnutTypeChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm h-100 p-3">
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-trophy text-warning me-2"></i> Top 5 Sumber Laporan</h6>
+                    <ul class="list-group list-group-flush" id="listPatrol"></ul>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm h-100 p-3">
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-building-circle-exclamation text-danger me-2"></i> Top 5 Area Temuan</h6>
+                    <ul class="list-group list-group-flush" id="listSection"></ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100 p-3">
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-bars-staggered text-success me-2"></i> Analisis Jenis Patrol vs Kategori</h6>
+                    <div class="chart-wrapper"><canvas id="horizStackedChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+        const typesList = ['Safety', 'Environment', 'Quality', 'Productivity', '5S & 2S3T', 'Muda', 'Lainnya'];
+        const typesColors = { 'Safety': '#dc3545', 'Environment': '#198754', 'Quality': '#0d6efd', 'Productivity': '#ffc107', '5S & 2S3T': '#6f42c1', 'Muda': '#fd7e14', 'Lainnya': '#6c757d' };
+        let charts = {}; 
+
+        window.onload = () => loadAllData(new Date().getFullYear());
+
+        async function loadAllData(year) {
+            try {
+                const res = await fetch(`/api/analytics/full?year=${year}`);
+                const result = await res.json();
+                if (result.status !== 'success') return;
+
+                const data = result;
+
+                // 1. Update Dropdown Tahun
+                const yearSelect = document.getElementById('yearFilter');
+                if (yearSelect.options.length === 0) {
+                    data.availableYears.forEach(y => yearSelect.add(new Option(y, y, false, y == year)));
+                }
+
+                // 2. Render THE 3 NEW FINDING INSIGHTS
+                renderFindingInsights(data.insights);
+
+                // 3. Render 8 KPI Cards
+                renderKPICards(data.kpi);
+
+                // 4. Render Lists (Ranking)
+                renderLists(data.lists);
+
+                // 5. Render Chart.js
+                renderCharts(data.charts);
+
+            } catch (err) { console.error(err); }
+        }
+
+        // ==========================================
+        // FUNGSI RENDER INSIGHTS TEMUAN
+        // ==========================================
+        function renderFindingInsights(ins) {
+            // A. AI Recurring
+            const aiContainer = document.getElementById('aiRecurringContent');
+            if(ins.ai_recurring) {
+                aiContainer.innerHTML = `
+                    <div class="text-center mt-3 mb-2">
+                        <span class="badge bg-danger fs-6 mb-2">Terdeteksi ${ins.ai_recurring.count}x</span>
+                        <h5 class="fw-bold text-dark fst-italic">"${ins.ai_recurring.problem}"</h5>
+                    </div>
+                    <div class="ai-conclusion mt-3 border-start border-danger border-4 bg-danger bg-opacity-10 text-danger">
+                        <b>Peringatan:</b> AI mendeteksi kemiripan teks temuan ini diulangi berkali-kali di lokasi yang sama. Masalah ini belum tuntas ke akar (Root Cause)!
+                    </div>
+                `;
+            } else {
+                aiContainer.innerHTML = `<div class="text-center py-4 text-success"><i class="fa-solid fa-shield-check fs-2 mb-2"></i><br>Aman! Tidak ada masalah berulang.</div>`;
+            }
+
+            // B. Hotspot
+            document.getElementById('hotspotName').innerText = ins.hotspot.name;
+            document.getElementById('hotspotCount').innerText = ins.hotspot.count;
+
+            // C. SLA Kritis
+            const cSla = Math.round(ins.sla.critical);
+            const nSla = Math.round(ins.sla.normal);
+            document.getElementById('slaCritical').innerText = cSla;
+            document.getElementById('slaNormal').innerText = nSla;
+            
+            let slaMsg = cSla <= nSla ? 
+                `Bagus! Tim merespons masalah kritis lebih cepat dari masalah biasa.` : 
+                `<span class="text-danger">Bahaya! Masalah kritis (Safety) ditangani lebih lambat (${cSla} hari) dibanding masalah biasa. Minta prioritas!</span>`;
+            document.getElementById('slaConclusion').innerHTML = `<b>Analisis:</b> ${slaMsg}`;
+        }
+
+        // ==========================================
+        // FUNGSI RENDER KPI (DARI PHP)
+        // ==========================================
+        function renderKPICards(kpi) {
+            const tot = kpi.total_findings || 0, closed = kpi.tot_closed || 0, open = kpi.tot_open || 0;
+            const pctC = tot > 0 ? ((closed/tot)*100).toFixed(1) : 0;
+            const pctO = tot > 0 ? ((open/tot)*100).toFixed(1) : 0;
+            const pctTime = closed > 0 ? (((kpi.on_time||0)/closed)*100).toFixed(1) : 0;
+
+            const cardsHTML = `
+                <div class="col"><div class="card kpi-card h-100 bg-primary bg-opacity-10 border-start border-primary border-4"><div class="card-body d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1" style="font-size:10px;">TOTAL TEMUAN</h6><h3 class="fw-black text-primary mb-0">${tot}</h3></div><i class="fa-solid fa-file-contract fs-3 text-primary opacity-50"></i></div></div></div>
+                <div class="col"><div class="card kpi-card h-100 bg-secondary bg-opacity-10 border-start border-secondary border-4"><div class="card-body d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1" style="font-size:10px;">TITIK TERBANYAK</h6><h3 class="fw-black text-dark mb-0">${kpi.top_sec_total||0}</h3><small style="font-size:10px;">${kpi.top_sec_name||'-'}</small></div><i class="fa-solid fa-map-location-dot fs-3 text-secondary opacity-50"></i></div></div></div>
+                <div class="col"><div class="card kpi-card h-100 bg-success bg-opacity-10 border-start border-success border-4"><div class="card-body d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1" style="font-size:10px;">TELAH DI-CLOSE</h6><h3 class="fw-black text-success mb-0">${closed} <span class="fs-6">(${pctC}%)</span></h3></div><i class="fa-solid fa-check-double fs-3 text-success opacity-50"></i></div></div></div>
+                <div class="col"><div class="card kpi-card h-100 bg-danger bg-opacity-10 border-start border-danger border-4"><div class="card-body d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1" style="font-size:10px;">MASIH OPEN</h6><h3 class="fw-black text-danger mb-0">${open} <span class="fs-6">(${pctO}%)</span></h3></div><i class="fa-solid fa-triangle-exclamation fs-3 text-danger opacity-50"></i></div></div></div>
+                <div class="col"><div class="card kpi-card h-100 bg-info bg-opacity-10 border-start border-info border-4"><div class="card-body d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1" style="font-size:10px;">PERFORMA SLA</h6><h3 class="fw-black text-info mb-0">${pctTime}%</h3><small style="font-size:10px;">Avg: ${Math.round(kpi.avg_days||0)} Hari</small></div><i class="fa-solid fa-stopwatch fs-3 text-info opacity-50"></i></div></div></div>
+                <div class="col"><div class="card kpi-card h-100 bg-warning bg-opacity-10 border-start border-warning border-4"><div class="card-body d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1" style="font-size:10px;">KATEGORI TERTINGGI</h6><h3 class="fw-black text-dark mb-0">${kpi.top_type_total||0}</h3><small style="font-size:10px;">${kpi.top_type_name||'-'}</small></div><i class="fa-solid fa-fire fs-3 text-warning opacity-75"></i></div></div></div>
+                <div class="col"><div class="card kpi-card h-100 bg-dark bg-opacity-10 border-start border-dark border-4"><div class="card-body d-flex justify-content-between align-items-center opacity-50"><div><h6 class="text-muted fw-bold mb-1" style="font-size:10px;">PREDIKSI NAIK</h6><h3 class="fw-black text-dark mb-0">AI</h3></div><i class="fa-solid fa-arrow-trend-up fs-3 text-dark"></i></div></div></div>
+                <div class="col"><div class="card kpi-card h-100 bg-dark bg-opacity-10 border-start border-dark border-4"><div class="card-body d-flex justify-content-between align-items-center opacity-50"><div><h6 class="text-muted fw-bold mb-1" style="font-size:10px;">PREDIKSI TURUN</h6><h3 class="fw-black text-dark mb-0">AI</h3></div><i class="fa-solid fa-arrow-trend-down fs-3 text-dark"></i></div></div></div>
+            `;
+            document.getElementById('kpiContainer').innerHTML = cardsHTML;
+        }
+
+        // ==========================================
+        // FUNGSI RENDER LISTS & CHARTS
+        // ==========================================
+        function renderLists(lists) {
+            const getListHTML = (data, colorClass) => {
+                return data.map((d, i) => `<li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 border-bottom"><div class="d-flex align-items-center gap-2"><span class="badge ${i===0?colorClass:'bg-light text-secondary border'} rounded-circle rank-badge">${i+1}</span><span class="fw-semibold text-dark small">${d.name}</span></div><span class="badge bg-secondary rounded-pill">${d.total}</span></li>`).join('');
+            };
+            document.getElementById('listPatrol').innerHTML = getListHTML(lists.topPatrol, 'bg-warning text-dark');
+            document.getElementById('listSection').innerHTML = getListHTML(lists.topSection, 'bg-danger');
+        }
+
+        function renderCharts(cData) {
+            const buildStackedData = (dataArr, labelKey) => {
+                let labels = [...new Set(dataArr.map(d => d[labelKey]))];
+                let datasets = typesList.map(type => {
+                    let typeData = labels.map(l => {
+                        let match = dataArr.find(d => d[labelKey] === l && d.type === type);
+                        return match ? match.total : 0;
+                    });
+                    return { label: type, data: typeData, backgroundColor: typesColors[type], borderWidth: 0 };
+                });
+                return { labels, datasets };
+            };
+
+            initChart('stackedSectionChart', 'bar', buildStackedData(cData.c1, 'section'), { scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'bottom', labels: {boxWidth:10} } }, responsive: true, maintainAspectRatio: false });
+
+            let c2Labels = cData.c2.map(d => d.type), c2Totals = cData.c2.map(d => d.total), c2Bgs = c2Labels.map(l => typesColors[l] || typesColors['Lainnya']);
+            initChart('doughnutTypeChart', 'doughnut', { labels: c2Labels, datasets: [{ data: c2Totals, backgroundColor: c2Bgs, borderWidth: 2 }] }, { cutout: '65%', plugins: { legend: { position: 'bottom', labels: {boxWidth:10} } }, responsive: true, maintainAspectRatio: false });
+
+            initChart('horizStackedChart', 'bar', buildStackedData(cData.c3, 'category'), { indexAxis: 'y', scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'bottom', labels: {boxWidth:10} } }, responsive: true, maintainAspectRatio: false });
+        }
+
+        function initChart(id, type, data, options) {
+            if (charts[id]) charts[id].destroy();
+            charts[id] = new Chart(document.getElementById(id), { type, data, options });
+        }
+    </script>
+</body>
+</html>

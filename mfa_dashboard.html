@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MFA Control Tower - Sumitomo</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <script src="/js/chart.umd.js"></script>
+    <style>
+        .mfa-card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .trend-up { color: #198754; font-weight: bold; }
+        .trend-down { color: #dc3545; font-weight: bold; }
+        .trend-same { color: #6c757d; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-light pb-5">
+
+<div class="container-fluid mt-4 px-4">
+    <!-- Header Eksekutif -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center mb-4 pb-3 border-bottom gap-3">
+        <div class="w-100">
+            <h3 class="fw-bold text-dark mb-1" style="font-size: 1.5rem;">
+                <i class="fa-solid fa-ranking-star text-warning me-2"></i> MFA Control Tower
+            </h3>
+            <p class="text-muted mb-0" id="header-info">Memuat data...</p>
+        </div>
+        
+        <div class="d-flex gap-2 w-100 justify-content-start justify-content-lg-end">
+            <select id="yearFilter" class="form-select fw-bold shadow-sm text-primary" style="width: 150px; cursor: pointer;" onchange="loadMFAData()">
+                <!-- Pilihan tahun akan di-load otomatis oleh JS -->
+            </select>
+            <!-- Tiga Tombol Navigasi Utama -->
+            <a href="mfa_verification.html" class="btn btn-success fw-bold shadow-sm">
+                <i class="fa-solid fa-clipboard-check me-1"></i> Verification Center
+            </a>
+            <a href="mfa_compare.html" class="btn btn-warning fw-bold shadow-sm" style="color: #664d03;">
+                <i class="fa-solid fa-scale-balanced me-1"></i> Analisis Gap (VS)
+            </a>
+            <a href="mfa_input.html" class="btn btn-primary fw-bold shadow-sm" style="background-color: #6f42c1; border:none;">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Input Data
+            </a>
+            <a href="dashboard.html" class="btn btn-outline-secondary fw-bold shadow-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+            </a>
+        </div>
+        </div>
+    </div>
+
+    <!-- ROW 1: Gauge & Auto-Insight -->
+    <div class="row g-4 mb-4">
+        <!-- Speedometer -->
+        <div class="col-lg-4">
+            <div class="card mfa-card h-100 border-top border-primary border-4">
+                <div class="card-body text-center">
+                    <h6 class="fw-bold text-muted text-uppercase mb-1">MFA Factory Score (MMEU)</h6>
+                    <div style="height: 180px; position: relative;" class="mt-3">
+                        <canvas id="gaugeChart"></canvas>
+                        <div style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);">
+                            <h2 class="fw-bold text-dark mb-0" id="score-percentage">0%</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rasio Kelulusan -->
+        <div class="col-lg-4">
+            <div class="card mfa-card h-100 border-top border-info border-4">
+                <div class="card-body">
+                    <h6 class="fw-bold text-muted text-uppercase mb-3">Level III/IV/V Ratio</h6>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span class="fw-bold text-secondary">Tahun Lalu</span><span id="pass-2024">0 / 50</span>
+                        </div>
+                        <div class="progress" style="height: 15px;">
+                            <div id="bar-2024" class="progress-bar bg-secondary" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span class="fw-bold text-primary">Tahun Aktual</span><span class="fw-bold" id="pass-2025">0 / 50</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div id="bar-2025" class="progress-bar bg-primary progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <p class="text-success small fw-bold mt-3" id="pass-diff"><i class="fa-solid fa-arrow-trend-up me-1"></i> Menghitung tren...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-Insight AI -->
+        <div class="col-lg-4">
+            <div class="d-flex flex-column gap-3 h-100">
+                <div class="card mfa-card bg-success bg-opacity-10 h-50 border-start border-success border-4">
+                    <div class="card-body p-3">
+                        <small class="text-success fw-bold text-uppercase"><i class="fa-solid fa-trophy me-1"></i> Top Gainer Pillar</small>
+                        <h4 class="fw-bold text-dark mt-2 mb-0" id="top-pillar">-</h4>
+                    </div>
+                </div>
+                <div class="card mfa-card bg-danger bg-opacity-10 h-50 border-start border-danger border-4">
+                    <div class="card-body p-3">
+                        <small class="text-danger fw-bold text-uppercase"><i class="fa-solid fa-triangle-exclamation me-1"></i> Priority Focus (Weakness)</small>
+                        <h4 class="fw-bold text-dark mt-2 mb-0" id="bottom-pillar">-</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================== -->
+    <!-- ROW 1.5: THE NEW GONG! (AI GAP ANALYZER)           -->
+    <!-- ================================================== -->
+    <div class="row g-4 mb-4" id="aiGapContainer" style="display: none;">
+        <div class="col-12">
+            <div class="card mfa-card border-0 shadow-sm" id="aiGapCard">
+                <div class="card-body p-4 d-flex align-items-center gap-4">
+                    <div class="display-4 text-center" id="aiGapIcon" style="width: 80px;"><i class="fa-solid fa-robot"></i></div>
+                    <div>
+                        <h5 class="fw-bold mb-2 text-uppercase" id="aiGapTitle">AI GAP ANALYZER</h5>
+                        <p class="mb-0 text-dark" id="aiGapDesc" style="font-size: 14.5px;">Menghitung komparasi data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ================================================== -->
+    <!-- ================================================== -->
+    <!-- ROW 1.7: AI ROOT CAUSE 4M DISTRIBUTION             -->
+    <!-- ================================================== -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card mfa-card border-top border-warning border-4 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-dark text-uppercase mb-0">
+                            <i class="fa-solid fa-brain text-warning me-2"></i>AI Root Cause (4M) Analysis
+                        </h6>
+                        <span class="badge bg-warning text-dark"><i class="fa-solid fa-robot"></i> AI Generated</span>
+                    </div>
+                    <p class="text-muted small mb-3">Distribusi akar masalah berdasarkan analisis bahasa alami dari komentar Assessor MMEU.</p>
+                    <div style="height: 250px;">
+                        <canvas id="ai4mChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ================================================== -->
+    <!-- ROW 2: Radar Chart -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card mfa-card h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold text-muted text-uppercase mb-3"><i class="fa-solid fa-spider text-primary me-2"></i>MFA 5-Pillar Radar</h6>
+                    <div style="height: 300px;"><canvas id="radarChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ROW 3: Table Action Plan -->
+        <div class="col-lg-6">
+            <div class="card mfa-card h-100 overflow-hidden">
+                <div class="card-header bg-dark text-white py-3">
+                    <h6 class="fw-bold mb-0"><i class="fa-solid fa-list-check text-warning me-2"></i>MMEU Action Plan Tracking</h6>
+                </div>
+                <div class="table-responsive" style="max-height: 350px;">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                        <thead class="table-light text-uppercase sticky-top" style="font-size: 11px;">
+                            <tr>
+                                <th>No</th>
+                                <th>Pilar & Item</th>
+                                <th>Trend</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="action-plan-tbody">
+                            <tr><td colspan="5" class="text-center py-4">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROW 4: MFA 50-Points Heatmap Landscape -->
+    <div class="card mfa-card mt-4 mb-5 border-top border-dark border-4">
+        <div class="card-header bg-white pt-3 pb-2 px-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-grip me-2 text-primary"></i>50-Points Heatmap Landscape</h6>
+                <small class="text-muted">Peta visual kesehatan pabrik berdasarkan 50 check-point MMEU</small>
+            </div>
+            <div class="d-flex gap-3 small fw-bold">
+                <span class="text-danger"><i class="fa-solid fa-square me-1"></i>Lvl I-II</span>
+                <span class="text-info"><i class="fa-solid fa-square me-1"></i>Lvl III</span>
+                <span class="text-success"><i class="fa-solid fa-square me-1"></i>Lvl IV-V</span>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <style>
+                .heatmap-box {
+                    width: 38px; height: 38px; 
+                    display: flex; align-items: center; justify-content: center;
+                    border-radius: 6px; color: white; font-weight: bold; font-size: 13px;
+                    cursor: pointer; transition: all 0.2s ease-in-out;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                .heatmap-box:hover { transform: scale(1.15); z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+                .pillar-group { background-color: #f8f9fa; border-radius: 10px; padding: 15px; border: 1px solid #dee2e6; }
+                
+                /* Dynamic Colors */
+                .c-lvl-1 { background-color: #dc3545 !important; } /* Lvl 1/2 Red */
+                .c-lvl-2 { background-color: #dc3545 !important; } /* Lvl 1/2 Red */
+                .c-lvl-3 { background-color: #0dcaf0 !important; } /* Lvl 3 Info */
+                .c-lvl-4 { background-color: #198754 !important; } /* Lvl 4/5 Green */
+                .c-lvl-5 { background-color: #198754 !important; } /* Lvl 4/5 Green */
+            </style>
+            <div class="row g-3">
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <div class="pillar-group h-100">
+                        <h6 class="fw-bold text-success mb-3 text-center" style="font-size: 12px;">SAFETY & ENV</h6>
+                        <div class="d-flex flex-wrap gap-2 justify-content-center" id="heatmap-p1">
+                            <!-- Diisi JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="pillar-group h-100">
+                        <h6 class="fw-bold text-primary mb-3 text-center" style="font-size: 12px;">QUALITY</h6>
+                        <div class="d-flex flex-wrap gap-2 justify-content-center" id="heatmap-p2">
+                            <!-- Diisi JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7 col-md-12">
+                    <div class="pillar-group h-100 d-flex align-items-center justify-content-center text-muted gap-4">
+                        <div id="heatmap-p3" class="d-flex flex-wrap gap-2 w-100"></div>
+                        <div id="heatmap-p4" class="d-flex flex-wrap gap-2 w-100"></div>
+                        <div id="heatmap-p5" class="d-flex flex-wrap gap-2 w-100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL UPDATE ACTION PLAN -->
+    <div class="modal fade" id="updatePRModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+                <div class="modal-header text-white" style="background-color: #6f42c1;">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i>Update Progress Tindak Lanjut</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formUpdateMFA">
+                    <div class="modal-body p-4">
+                        <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 45px; height: 45px;" id="modalNoItem">#</div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark" id="modalNamaItem">Item Audit</h6>
+                                <small class="text-muted">Item Checklist MFA</small>
+                            </div>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="fw-bold text-danger mb-2 small text-uppercase">MMEU Auditor Comment</label>
+                                <div class="p-3 rounded bg-danger bg-opacity-10 border border-danger border-opacity-25 h-100">
+                                    <p class="fst-italic text-danger mb-0" id="modalKomentarJepang" style="font-size: 13px;">...</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-bold text-primary mb-2 small text-uppercase">Local Countermeasure</label>
+                                <textarea name="countermeasure" id="modalCountermeasure" class="form-control bg-light border-primary" rows="4" required></textarea>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Target Selesai (Due Date)</label>
+                                <input type="date" name="due_date" class="form-control" id="modalDue">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Status Progress</label>
+                                <select name="status" class="form-select fw-bold" id="modalStatus">
+                                    <option value="Open" class="text-warning">⭕ OPEN</option>
+                                    <option value="Closed" class="text-success">✅ CLOSED</option>
+                                </select>
+                            </div>
+                        </div>
+                        <input type="hidden" name="item_no" id="modalHiddenNoItem">
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-success fw-bold" style="background-color: #6f42c1;"><i class="fa-solid fa-save me-2"></i>Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Variabel Global untuk menyimpan instance Chart agar bisa di-destroy saat ganti tahun
+    let gaugeChartInstance = null;
+    let radarChartInstance = null;
+
+    async function loadMFAData() {
+        try {
+            // Ambil tahun dari dropdown (jika sudah ada)
+            const selectedYear = document.getElementById('yearFilter').value;
+            const url = selectedYear ? `/api/mfa/dashboard?year=${selectedYear}` : `/api/mfa/dashboard`;
+            
+            const res = await fetch(url);
+            const result = await res.json();
+            
+            if (result.status === 'success') {
+                const data = result.data;
+                
+                // --- 1. POPULATE DROPDOWN TAHUN (HANYA SEKALI SAAT LOAD AWAL) ---
+                const yearSelect = document.getElementById('yearFilter');
+                if (yearSelect.options.length === 0) {
+                    data.available_years.forEach(y => {
+                        const opt = document.createElement('option');
+                        opt.value = y;
+                        opt.text = `Tahun ${y}`;
+                        if (y === data.year) opt.selected = true; // Set tahun default
+                        yearSelect.appendChild(opt);
+                    });
+                }
+                
+                // --- 2. UPDATE TEKS & RASIO ---
+                document.getElementById('header-info').innerHTML = `Official MMEU Audit Results - <b>${data.year}</b> | Assessor: ${data.assessor}`;
+                
+                const extScores = data.score_external && data.score_external.length > 0 ? data.score_external : [0,0,0,0,0];
+                const externalScore = (extScores.reduce((a,b)=>a+b,0)/5).toFixed(1);
+                document.getElementById('score-percentage').innerText = externalScore + '%';
+                
+                const pctCurr = ((data.pass_current / data.target_pass) * 100).toFixed(1);
+                const pctPrev = ((data.pass_prev / data.target_pass) * 100).toFixed(1);
+                
+                document.getElementById('pass-2024').innerText = `${data.pass_prev} / ${data.target_pass}`;
+                document.getElementById('bar-2024').style.width = pctPrev + '%';
+                
+                document.getElementById('pass-2025').innerText = `${data.pass_current} / ${data.target_pass}`;
+                document.getElementById('bar-2025').style.width = pctCurr + '%';
+                
+                const diff = data.pass_current - data.pass_prev;
+                document.getElementById('pass-diff').innerHTML = `<i class="fa-solid fa-arrow-trend-${diff >= 0 ? 'up' : (diff < 0 ? 'down' : 'right')} me-1"></i> ${diff >= 0 ? '+' : ''}${diff} Item Lulus dibanding tahun lalu`;
+                
+                document.getElementById('top-pillar').innerText = data.top_pillar;
+                document.getElementById('bottom-pillar').innerText = data.bottom_pillar;
+
+                // --- 3. RENDER AI GAP ANALYZER & BLIND SPOT ---
+                const dropdown = document.getElementById('yearFilter');
+                const targetYear = (dropdown && dropdown.value) ? dropdown.value : data.year;
+
+                try {
+                    const bsRes = await fetch(`/api/mfa/blindspots/${targetYear}`);
+                    const bsData = await bsRes.json();
+
+                    const aiGapContainer = document.getElementById('aiGapContainer');
+                    const aiGapCard = document.getElementById('aiGapCard');
+                    const aiGapIcon = document.getElementById('aiGapIcon');
+                    const aiGapTitle = document.getElementById('aiGapTitle');
+                    const aiGapDesc = document.getElementById('aiGapDesc');
+
+                    if (bsData.status === 'success' && bsData.total_blindspots > 0) {
+                        aiGapContainer.style.display = 'flex';
+                        
+                        // Mapping warna & icon berdasarkan akar masalah dominan
+                        const themeMap = {
+                            'Method': { color: 'warning', icon: 'fa-clipboard-check', text: 'Standarisasi / Prosedur Kerja' },
+                            'Machine': { color: 'danger', icon: 'fa-gears', text: 'Kondisi & Pemeliharaan Mesin' },
+                            'Man': { color: 'primary', icon: 'fa-user-graduate', text: 'Kualifikasi & Kepatuhan Personel' },
+                            'Material': { color: 'secondary', icon: 'fa-boxes-stacked', text: 'Manajemen Material & Part' }
+                        };
+                        const activeTheme = themeMap[bsData.dominant_cause] || themeMap['Method'];
+
+                        aiGapCard.className = `card mfa-card border-0 shadow-sm bg-${activeTheme.color} bg-opacity-10 border-start border-${activeTheme.color} border-5`;
+                        aiGapIcon.innerHTML = `<i class="fa-solid ${activeTheme.icon} text-${activeTheme.color}"></i>`;
+                        aiGapTitle.innerHTML = `<span class="text-${activeTheme.color}"><i class="fa-solid fa-triangle-exclamation me-2"></i>AI BLIND SPOT DETECTOR (${bsData.total_blindspots} Items Gap)</span>`;
+                        
+                        // Ambil 2 contoh item paling kritis untuk display
+                        const topExamples = bsData.items.slice(0, 2).map(i => 
+                            `<b>Poin #${i.item_no} (${i.pillar_name})</b> dinilai mandiri Lvl ${i.level_mandiri} namun auditor MMEU memberi Lvl ${i.level_mmeu} [Akar Masalah: <span class="badge bg-dark">${i.category_4m} ${i.confidence_4m}%</span>]`
+                        ).join('<br>• ');
+
+                        aiGapDesc.innerHTML = `
+                            Analisis AI mendeteksi titik buta penilaian pabrik terkonsentrasi pada faktor <b>${bsData.dominant_cause}</b> (${activeTheme.text}).<br>
+                            • ${topExamples}
+                        `;
+                    } else {
+                        // Jika tidak ada blind spot kritis
+                        aiGapContainer.style.display = 'flex';
+                        aiGapCard.className = 'card mfa-card border-0 shadow-sm bg-success bg-opacity-10 border-start border-success border-5';
+                        aiGapIcon.innerHTML = '<i class="fa-solid fa-circle-check text-success"></i>';
+                        aiGapTitle.innerHTML = '<span class="text-success"><i class="fa-solid fa-shield-check me-2"></i>EVALUASI SELARAS</span>';
+                        aiGapDesc.innerHTML = 'Tidak ditemukan blind spot kritis antara penilaian mandiri dan auditor MMEU pada tahun ini.';
+                    }
+                } catch (err) {
+                    console.error("Gagal load AI Gap:", err);
+                }
+
+                // --- 4. RENDER TABEL ACTION PLAN ---
+                const tbody = document.getElementById('action-plan-tbody');
+                tbody.innerHTML = '';
+                if(data.action_plans && data.action_plans.length > 0) {
+                    data.action_plans.forEach(pr => {
+                        let t_class = pr.trend === 'Up' ? 'trend-up' : (pr.trend === 'Down' ? 'trend-down' : 'trend-same');
+                        let t_icon = pr.trend === 'Up' ? 'fa-arrow-up' : (pr.trend === 'Down' ? 'fa-arrow-down' : 'fa-minus');
+                        let s_badge = pr.status === 'Closed' ? 'bg-success' : 'bg-warning text-dark';
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="fw-bold text-muted">${pr.no}</td>
+                                <td><span class="badge bg-primary mb-1">${pr.pillar}</span><br><span class="fw-semibold text-truncate d-block" style="max-width:180px;">${pr.item}</span></td>
+                                <td class="${t_class}"><i class="fa-solid ${t_icon}"></i> ${pr.trend}</td>
+                                <td><span class="badge ${s_badge}">${pr.status}</span></td>
+                                <td><button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#updatePRModal"
+                                        onclick="bukaModalUpdate('${pr.no}', '${pr.item}', '${pr.comment}', '${pr.due}', '${pr.status}')">
+                                        <i class="fa-solid fa-pen-to-square"></i> Update </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 fw-bold text-success"><i class="fa-solid fa-check-circle me-1"></i> Area bersih. Tidak ada Action Plan untuk tahun ini.</td></tr>';
+                }
+
+                // --- 5. HAPUS CHART LAMA JIKA ADA, LALU BUAT BARU ---
+                if(gaugeChartInstance) gaugeChartInstance.destroy();
+                if(radarChartInstance) radarChartInstance.destroy();
+
+                gaugeChartInstance = new Chart(document.getElementById('gaugeChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Kurang (<60%)', 'Aman (60-80%)', 'Excellent (>80%)'],
+                        datasets: [{ data: [60, 20, 20], backgroundColor: ['#dc3545', '#ffc107', '#198754'], borderWidth: 0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, circumference: 180, rotation: -90, cutout: '75%', plugins: { legend: { display: false } } }
+                });
+
+                radarChartInstance = new Chart(document.getElementById('radarChart'), {
+                    type: 'radar',
+                    data: {
+                        labels: data.pillars,
+                        datasets: [
+                            { label: `Aktual MMEU ${data.year}`, data: extScores, backgroundColor: 'rgba(220, 53, 69, 0.2)', borderColor: '#dc3545', borderWidth: 2 },
+                            { label: `Tahun Sebelumnya`, data: data.score_prev || [0,0,0,0,0], backgroundColor: 'rgba(108, 117, 125, 0.1)', borderColor: '#6c757d', borderDash: [5, 5], borderWidth: 1 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100 } } }
+                });
+
+                // --- 6. RENDER 50-POINT HEATMAP ---
+                if(data.heatmap_details) {
+                    let hp1 = '', hp2 = '', hp3 = '', hp4 = '', hp5 = '';
+                    data.heatmap_details.forEach(hm => {
+                        let box = `<div class="heatmap-box c-lvl-${hm.level_mmeu}" data-bs-toggle="tooltip" title="Poin ${hm.item_no} (Level ${hm.level_mmeu})">${hm.item_no}</div>`;
+                        if(hm.item_no <= 13) hp1 += box;
+                        else if(hm.item_no <= 25) hp2 += box;
+                        else if(hm.item_no <= 33) hp3 += box;
+                        else if(hm.item_no <= 43) hp4 += box;
+                        else hp5 += box;
+                    });
+                    document.getElementById('heatmap-p1').innerHTML = hp1;
+                    document.getElementById('heatmap-p2').innerHTML = hp2;
+                    document.getElementById('heatmap-p3').innerHTML = hp3;
+                    document.getElementById('heatmap-p4').innerHTML = hp4;
+                    document.getElementById('heatmap-p5').innerHTML = hp5;
+                }
+            } else {
+                alert(result.message);
+            }
+        } catch(err) {
+            console.error("Gagal load MFA", err);
+        }
+        // --- 7. FETCH & RENDER AI 4M ROOT CAUSE ---
+                // Pastikan kita menggunakan tahun yang sedang aktif
+                const dropdown = document.getElementById('yearFilter');
+                const targetYear = (dropdown && dropdown.value) ? dropdown.value : data.year;
+                
+                try {
+                    const aiRes = await fetch(`/api/dashboard-4m/${targetYear}`);
+                    const aiData = await aiRes.json();
+                    
+                    if (aiData && aiData.distribution) {
+                        // Hapus chart lama jika ada
+                        if (window.ai4mChartInstance) {
+                            window.ai4mChartInstance.destroy();
+                        }
+                        
+                        // Ekstrak data untuk Chart
+                        const labels = aiData.distribution.map(d => d.category); // Man, Machine, dll
+                        const counts = aiData.distribution.map(d => d.total_comments);
+                        
+                        window.ai4mChartInstance = new Chart(document.getElementById('ai4mChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Jumlah Masalah',
+                                    data: counts,
+                                    backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545'], // Biru, Hijau, Kuning, Merah
+                                    borderRadius: 6
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                            }
+                        });
+                    }
+                } catch(err) {
+                    console.error("Gagal load data AI 4M:", err);
+                }
+                
+    }
+    
+    window.onload = loadMFAData;
+    
+    
+    function bukaModalUpdate(no, item, comment, due, status) {
+        document.getElementById('modalNoItem').innerText = no;
+        document.getElementById('modalNamaItem').innerText = item;
+        document.getElementById('modalKomentarJepang').innerText = `"${comment !== 'null' && comment ? comment : '-'}"`;
+        document.getElementById('modalHiddenNoItem').value = no;
+        document.getElementById('modalStatus').value = status;
+        document.getElementById('modalDue').value = due !== '-' ? due : '';
+        document.getElementById('modalCountermeasure').value = comment !== 'null' && comment ? comment : '';
+    }
+
+    document.getElementById('formUpdateMFA').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        alert('Fitur Update database segera disiapkan!');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('updatePRModal'));
+        modal.hide();
+    });
+
+    // Aktifkan Tooltip Bootstrap 5
+    setInterval(() => {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl) });
+    }, 2000);
+
+    
+</script>
+</body>
+</html>

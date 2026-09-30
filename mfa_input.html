@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Detail MFA - Sumitomo</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <style>
+        .accordion-button:not(.collapsed) { background-color: #f8f9fa; color: #6f42c1; font-weight: bold; }
+        .accordion-button { font-weight: 600; color: #495057; }
+        .form-control-sm { border-radius: 6px; }
+    </style>
+</head>
+<body class="bg-light pb-5">
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div>
+            <h3 class="fw-bold text-dark mb-0"><i class="fa-solid fa-pen-to-square text-primary me-2"></i> Input 50-Points MFA</h3>
+            <p class="text-muted mb-0 mt-1">Isi level evaluasi (I, II, III, IV, V) per item ceklis</p>
+        </div>
+        <a href="mfa_dashboard.html" class="btn btn-outline-secondary fw-bold shadow-sm"><i class="fa-solid fa-arrow-left me-1"></i> Kembali</a>
+    </div>
+
+    <form id="formInputMFA">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold text-muted small">Tahun Audit</label>
+                        <input type="number" class="form-control fw-bold" id="auditYear" name="auditYear" value="2026" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-muted small">Pilih Fase Input</label>
+                        <select class="form-select fw-bold border-primary text-primary" id="auditPhase">
+                            <option value="mandiri">1. Level Mandiri (Self-Assessment)</option>
+                            <option value="pre_audit">2. Level Pre-Audit (SECJ)</option>
+                            <option value="mmeu">3. Level MMEU (Auditor Jepang)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold text-muted small">Nama Auditor</label>
+                        <input type="text" class="form-control" name="auditorName" placeholder="Contoh: Mr. Higuchi" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-outline-primary fw-bold w-100 shadow-sm" type="button" id="btnLoadData">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i> Buka Form
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tambahkan pembungkus ini agar form sembunyi sebelum diklik "Buka Form" -->
+                <div id="formContainer" class="d-none">
+
+                <!-- SMART ACCORDION UNTUK 50 POIN AKAN DI-RENDER OLEH JS -->
+                <div class="accordion" id="accordionMFA">
+                    <!-- Konten akan dimuat di sini -->
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-success px-5 fw-bold shadow" style="background-color: #6f42c1; border:none;">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> Simpan Seluruh Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Script Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const mfaStructure = {
+        'Safety & Environment': [
+            { no: 1, title: "Top management's active participation & 1-2-3" },
+            { no: 2, title: '"S-T-O-P" Campaign to reduce falls' },
+            { no: 3, title: 'Switch-OFF & Residual Energy ZERO activity' },
+            { no: 4, title: 'Prevention of Serious Accidents' },
+            { no: 5, title: 'SEI group-wide audit and countermeasures' },
+            { no: 6, title: 'Safety guard, interlock, & PPE' },
+            { no: 7, title: 'Safety Education & Training' },
+            { no: 8, title: 'Abnormality response' },
+            { no: 9, title: 'Emergency response' },
+            { no: 10, title: 'Handling of environmental abnormality' },
+            { no: 11, title: 'Environmental patrol' },
+            { no: 12, title: 'Energy saving activity' },
+            { no: 13, title: 'Reduction of industrial waste and water usage' }
+        ],
+        'Quality': [
+            { no: 14, title: 'Separation of non-conforming and "before&after process"' },
+            { no: 15, title: '2S3T' },
+            { no: 16, title: 'Maintaining countermeasures' },
+            { no: 17, title: 'Defect reduction activities' },
+            { no: 18, title: 'Standards/Procedure for operation/work' },
+            { no: 19, title: 'Standard compliance control' },
+            { no: 20, title: 'Change point control' },
+            { no: 21, title: 'Abnormality control' },
+            { no: 22, title: 'Handling of non-conforming products and special releases' },
+            { no: 23, title: 'Certified inspector' },
+            { no: 24, title: 'Final inspection' },
+            { no: 25, title: 'Management of measuring instruments' }
+        ],
+        'Equipment': [
+            { no: 26, title: 'Management of critical/significant equipment' },
+            { no: 27, title: 'PM' },
+            { no: 28, title: 'Daily check of equipment' },
+            { no: 29, title: 'Activities to reduce machine failure and downtime' },
+            { no: 30, title: 'Spare parts management' },
+            { no: 31, title: 'Instruction manuals/documents' },
+            { no: 32, title: 'Development of maintenance skill' },
+            { no: 33, title: 'Activities to reduce short time machine down' }
+        ],
+        'Plant': [
+            { no: 34, title: 'Daily production plan and actual progress' },
+            { no: 35, title: 'WIP/Storage period' },
+            { no: 36, title: 'FIFO First-in First-out' },
+            { no: 37, title: 'Improvement of Equipment Efficiency' },
+            { no: 38, title: 'Production lead time management' },
+            { no: 39, title: 'Inventory control' },
+            { no: 40, title: '"5S" patrol and countermeasures' },
+            { no: 41, title: 'Cheerful greetings, proper dress code & neat, tidy factory' },
+            { no: 42, title: 'Active mutual communication' },
+            { no: 43, title: 'Education & Training' }
+        ],
+        'Kaizen': [
+            { no: 44, title: 'Promotion of "200 Kaizen"' },
+            { no: 45, title: 'Resources for Kaizen activities' },
+            { no: 46, title: 'Practical Kaizen Training' },
+            { no: 47, title: 'Development of the Kaizen Trainer' },
+            { no: 48, title: 'Allocation of Kaizen Corner' },
+            { no: 49, title: 'Organization for promoting Kaizen' },
+            { no: 50, title: 'Progress management of SGA and Kaizen Suggestions' }
+        ]
+    };
+
+    const levelOptions = `<option value="">-</option><option value="1">I</option><option value="2">II</option><option value="3">III</option><option value="4">IV</option><option value="5">V</option>`;
+    
+    const accordionContainer = document.getElementById('accordionMFA');
+    let accId = 1;
+
+    // 2. RENDER ACCORDION BESERTA NAMA INPUT YANG SPESIFIK
+    for (const [pillar, items] of Object.entries(mfaStructure)) {
+        let rowsHtml = '';
+        
+        items.forEach(item => {
+            const safeTitle = item.title.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            
+            rowsHtml += `
+                <tr>
+                    <td class="text-center fw-bold">${item.no}</td>
+                    <td class="fw-semibold text-dark" style="font-size: 13px;">${item.title}
+                        <input type="hidden" name="pillar_${item.no}" value="${pillar}">
+                        <input type="hidden" name="title_${item.no}" value="${safeTitle}">
+                    </td>
+                    <td>
+                        <!-- Dropdown Skor (Hanya 1 yang akan muncul sesuai fase) -->
+                        <select name="mandiri_${item.no}" class="form-select form-select-sm text-center bg-light input-mandiri d-none">${levelOptions}</select>
+                        <select name="pre_audit_${item.no}" class="form-select form-select-sm border-warning text-center fw-bold text-warning input-pre_audit d-none">${levelOptions}</select>
+                        <select name="mmeu_${item.no}" class="form-select form-select-sm border-primary text-center fw-bold text-primary input-mmeu d-none">${levelOptions}</select>
+                    </td>
+                    <td>
+                        <!-- Textarea Komentar (Hanya yang relevan yang akan muncul) -->
+                        <textarea name="komentar_indo_${item.no}" class="form-control form-control-sm mb-1 input-mandiri input-mmeu d-none" rows="2" style="resize: vertical; font-size: 12px;" placeholder="Komentar / Action Plan (Indo)..."></textarea>
+                        
+                        <textarea name="komentar_pre_audit_${item.no}" class="form-control form-control-sm input-pre_audit d-none" rows="2" style="resize: vertical; font-size: 12px;" placeholder="Temuan Pre-Audit..."></textarea>
+                        
+                        <textarea name="komentar_jepang_${item.no}" class="form-control form-control-sm input-mmeu d-none" rows="2" style="resize: vertical; font-size: 12px;" placeholder="Komentar (Jepang)..."></textarea>
+                    </td>
+                </tr>
+            `;
+        });
+
+        const accordionHtml = `
+            <div class="accordion-item border-0 mb-3 shadow-sm rounded overflow-hidden">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-white border-bottom" type="button" data-bs-toggle="collapse" data-bs-target="#col_${accId}">
+                        <div class="d-flex justify-content-between w-100 pe-3">
+                            <span><i class="fa-solid fa-folder-open text-warning me-2"></i> Pilar: ${pillar}</span>
+                            <span class="badge bg-secondary rounded-pill">${items.length} Item</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="col_${accId}" class="accordion-collapse collapse" data-bs-parent="#accordionMFA">
+                    <div class="accordion-body bg-light p-0">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                            <thead class="table-secondary text-muted">
+                                <tr>
+                                    <!-- Header kita ringkas menjadi 4 kolom saja -->
+                                    <th style="width: 5%;" class="text-center">No</th>
+                                    <th style="width: 35%;">Check Point Title</th>
+                                    <th style="width: 15%;" class="text-center">Skor Evaluasi</th>
+                                    <th style="width: 45%;">Komentar Auditor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        accordionContainer.innerHTML += accordionHtml;
+        accId++;
+    }
+
+    // 3. EVENT LISTENER UNTUK TOMBOL SIMPAN
+    document.getElementById('formInputMFA').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = this.querySelector('button[type="submit"]');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Menyimpan...';
+        btn.disabled = true;
+
+        // Ambil data form
+        const formData = new FormData(this);
+        // Konversi ke format JSON Object
+        const dataPayload = Object.fromEntries(formData.entries());
+
+        // Tambahkan info tahun dan auditor ke dalam payload
+        dataPayload.auditYear = document.getElementById('auditYear').value;
+        dataPayload.auditorName = document.querySelector('input[name="auditorName"]').value;
+
+        try {
+            // Memanggil API Node.js yang akan kita buat
+            const response = await fetch('/api/mfa/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataPayload)
+            });
+            
+            const result = await response.json();
+            
+            if(result.status === 'success') {
+                alert('Luar biasa! Data 50-Points MFA berhasil disimpan ke Database.');
+                window.location.href = 'mfa_dashboard.html';
+            } else {
+                alert('Gagal menyimpan: ' + result.message);
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i> Simpan Seluruh Data';
+                btn.disabled = false;
+            }
+        } catch(err) {
+            alert('Gagal terhubung ke server Node.js!');
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i> Simpan Seluruh Data';
+            btn.disabled = false;
+        }
+    });
+    // 4. EVENT LISTENER TOMBOL CEK DATA & BUKA FORM
+    document.getElementById('btnLoadData').addEventListener('click', async function() {
+        const year = document.getElementById('auditYear').value;
+        const phase = document.getElementById('auditPhase').value; // Ambil fase yang dipilih
+        const btn = this;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
+        
+        try {
+            const res = await fetch(`/api/mfa/audit-data?year=${year}`);
+            const result = await res.json();
+            const auditorInput = document.querySelector('input[name="auditorName"]');
+
+            if (result.status === 'success') {
+                auditorInput.value = result.data.auditorName;
+                result.data.items.forEach(item => {
+                    const no = item.item_no;
+                    if (document.querySelector(`[name="mandiri_${no}"]`)) {
+                        document.querySelector(`[name="mandiri_${no}"]`).value = item.level_mandiri > 0 ? item.level_mandiri : "";
+                        document.querySelector(`[name="pre_audit_${no}"]`).value = item.level_pre_audit > 0 ? item.level_pre_audit : "";
+                        document.querySelector(`[name="mmeu_${no}"]`).value = item.level_mmeu > 0 ? item.level_mmeu : "";
+                        
+                        document.querySelector(`[name="komentar_pre_audit_${no}"]`).value = item.comment_pre_audit || "";
+                        document.querySelector(`[name="komentar_indo_${no}"]`).value = item.comment_indo || "";
+                        document.querySelector(`[name="komentar_jepang_${no}"]`).value = item.comment_jepang || "";
+                    }
+                });
+                alert(`✅ Data tahun ${year} ditemukan! Membuka form untuk fase: ${phase.toUpperCase()}`);
+            } else {
+                // Bersihkan jika data kosong
+                auditorInput.value = "";
+                for(let i = 1; i <= 50; i++) {
+                    if (document.querySelector(`[name="mandiri_${i}"]`)) {
+                        document.querySelector(`[name="mandiri_${i}"]`).value = "";
+                        document.querySelector(`[name="pre_audit_${i}"]`).value = "";
+                        document.querySelector(`[name="mmeu_${i}"]`).value = "";
+                        document.querySelector(`[name="komentar_pre_audit_${i}"]`).value = "";
+                        document.querySelector(`[name="komentar_indo_${i}"]`).value = "";
+                        document.querySelector(`[name="komentar_jepang_${i}"]`).value = "";
+                    }
+                }
+                alert(`ℹ️ Belum ada data untuk tahun ${year}. Form baru disiapkan untuk fase: ${phase.toUpperCase()}`);
+            }
+
+            // --- TRIK SULAP UI: TAMPILKAN HANYA YANG DIPILIH ---
+            // 1. Sembunyikan semua input dulu
+            document.querySelectorAll('.input-mandiri, .input-pre_audit, .input-mmeu').forEach(el => el.classList.add('d-none'));
+            // 2. Tampilkan yang class-nya sesuai dengan fase yang dipilih
+            document.querySelectorAll(`.input-${phase}`).forEach(el => el.classList.remove('d-none'));
+
+            // 3. Munculkan area form utama
+            document.getElementById('formContainer').classList.remove('d-none');
+            
+            // Expand accordion pertama
+            const firstCol = document.getElementById('col_1');
+            if(!firstCol.classList.contains('show')) new bootstrap.Collapse(firstCol, 'show');
+
+        } catch (err) {
+            console.error(err);
+            alert("❌ Gagal menarik data dari server Node.js.");
+        }
+        btn.innerHTML = '<i class="fa-solid fa-magnifying-glass me-1"></i> Buka Form';
+    });
+</script>
+</body>
+</html>

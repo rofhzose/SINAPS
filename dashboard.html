@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Patrol - S.I.N.A.P.S</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <script src="/js/chart.umd.js"></script>
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', system-ui, sans-serif; }
+        
+        /* Premium Card Styling */
+        .premium-card { background: #fff; border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow: hidden; }
+        .chart-wrapper { position: relative; width: 100%; height: 240px; }
+        .custom-badge { color: white; padding: 0.35em 0.75em; border-radius: 6px; font-weight: 600; font-size: 0.75em; letter-spacing: 0.5px; }
+        
+        /* Action Buttons */
+        .btn-nav-glass { background: #fff; border: 1px solid #e2e8f0; color: #475569; font-weight: 600; font-size: 13px; border-radius: 8px; transition: all 0.2s; }
+        .btn-nav-glass:hover { background: #f8fafc; color: #0f172a; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .btn-nav-primary { background: #0a192f; border: none; color: #fff; font-weight: 600; font-size: 13px; border-radius: 8px; transition: all 0.2s; }
+        .btn-nav-primary:hover { background: #172a45; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(10,25,47,0.2); }
+        
+        /* Smart Filter Console */
+        .filter-console { background: #ffffff; border-radius: 12px; padding: 1.5rem; border: 1px solid #e9ecef; }
+        .form-select-sm { border-radius: 8px; font-weight: 500; border-color: #cbd5e1; }
+        
+        /* Table Enhancements */
+        .table-overdue { background-color: #fff5f5 !important; }
+        .table-overdue td { border-color: #ffd8d8; }
+        .img-thumbnail-custom { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .table > :not(caption) > * > * { padding: 1rem 0.75rem; vertical-align: middle; }
+    </style>
+</head>
+<body class="pb-5">
+
+    <div class="container-fluid mt-4 px-4 px-lg-5">
+        
+        <!-- HEADER PORTAL -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center mb-4 pb-3 border-bottom gap-3">
+            <div>
+                <h3 class="fw-black text-dark mb-1" style="font-size: 1.6rem; letter-spacing: -0.5px;">
+                    <i class="fa-solid fa-industry text-primary me-2"></i> Section Improvement 
+                    <span class="text-muted fw-normal ms-2 border-start border-2 ps-2" style="font-size: 1rem;">改善部門</span>
+                </h3>
+                <p class="text-muted mb-0">Selamat datang, <b id="userName">Executive</b> <span class="ms-1">| ようこそ</span></p>
+            </div>
+            
+            <div class="d-flex flex-wrap gap-2 w-100 justify-content-start justify-content-lg-end">
+                <a href="mfa_dashboard.html" class="btn btn-nav-glass flex-grow-1 flex-lg-grow-0"><i class="fa-solid fa-ranking-star text-purple me-1"></i> Audit MFA</a>
+                <a href="dept_dashboard.html" class="btn btn-nav-glass flex-grow-1 flex-lg-grow-0"><i class="fa-solid fa-tower-observation text-warning me-1"></i> Control Tower</a>
+                <a href="statistik.html" class="btn btn-nav-glass flex-grow-1 flex-lg-grow-0"><i class="fa-solid fa-chart-line text-info me-1"></i> Statistik</a>
+                <a href="add.html" class="btn btn-nav-primary px-4 flex-grow-1 flex-lg-grow-0"><i class="fa-solid fa-plus me-1"></i> Laporan Baru</a>
+                <a href="HUB.html" class="btn btn-danger shadow-sm flex-shrink-0 rounded-3" title="Keluar"><i class="fa-solid fa-right-from-bracket"></i></a>
+            </div>
+        </div>
+
+        <!-- KPI CARDS -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="premium-card h-100 p-4 border-start border-primary border-5">
+                    <div class="text-muted small fw-bold text-uppercase mb-1">Total Temuan <span class="fw-normal opacity-75 ms-1">(総発見数)</span></div>
+                    <h2 class="fw-black mb-0 text-dark" id="kpiTotal">0</h2>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="premium-card h-100 p-4 border-start border-warning border-5">
+                    <div class="text-muted small fw-bold text-uppercase mb-1">Status Open <span class="fw-normal opacity-75 ms-1">(未対応)</span></div>
+                    <h2 class="fw-black mb-0 text-warning" id="kpiOpen">0</h2>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="premium-card h-100 p-4 border-start border-success border-5">
+                    <div class="text-muted small fw-bold text-uppercase mb-1">Status Closed <span class="fw-normal opacity-75 ms-1">(完了)</span></div>
+                    <h2 class="fw-black mb-0 text-success" id="kpiClosed">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3 GRAFIK DASHBOARD -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4 col-md-12">
+                <div class="premium-card h-100 p-4">
+                    <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 12px;">
+                        <i class="fa-solid fa-chart-column text-primary me-2"></i>Temuan per PIC Section
+                        <span class="d-block fw-normal text-secondary mt-1" style="font-size: 10px; letter-spacing: 1px;">部門別発見数</span>
+                    </h6>
+                    <div class="chart-wrapper"><canvas id="sectionChart"></canvas></div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="premium-card h-100 p-4">
+                    <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 12px;">
+                        <i class="fa-solid fa-shield-halved text-info me-2"></i>Temuan per Jenis Patrol
+                        <span class="d-block fw-normal text-secondary mt-1" style="font-size: 10px; letter-spacing: 1px;">巡回種類別</span>
+                    </h6>
+                    <div class="chart-wrapper"><canvas id="categoryChart"></canvas></div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="premium-card h-100 p-4">
+                    <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 12px;">
+                        <i class="fa-solid fa-tags text-warning me-2"></i>Kategori Jenis Temuan
+                        <span class="d-block fw-normal text-secondary mt-1" style="font-size: 10px; letter-spacing: 1px;">発見カテゴリー</span>
+                    </h6>
+                    <div class="chart-wrapper"><canvas id="findingTypeChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMART FILTER CONSOLE -->
+        <div class="premium-card mb-4">
+            <div class="bg-light border-bottom py-3 px-4">
+                <h6 class="fw-bold text-secondary mb-0"><i class="fa-solid fa-sliders me-2"></i> Smart Filter & Sort <span class="fw-normal ms-2 border-start ps-2">検索条件</span></h6>
+            </div>
+            <div class="p-4">
+                <form id="filterForm" class="row g-3 align-items-end" onsubmit="event.preventDefault(); loadDashboardData();">
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Status</label>
+                        <select id="filterStatus" class="form-select form-select-sm bg-light">
+                            <option value="">Semua Status</option>
+                            <option value="Open">Open</option>
+                            <option value="Closed">Closed</option>
+                            <option value="Overdue" class="text-danger fw-bold">Overdue (Terlambat)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Jenis Patrol</label>
+                        <select id="filterCat" class="form-select form-select-sm bg-light"><option value="">Semua Jenis</option></select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Kategori Temuan</label>
+                        <select id="filterType" class="form-select form-select-sm bg-light">
+                            <option value="">Semua Kategori</option>
+                            <option value="Safety">Safety</option>
+                            <option value="Environment">Environment</option>
+                            <option value="Quality">Quality</option>
+                            <option value="Productivity">Productivity</option>
+                            <option value="5S & 2S3T">5S & 2S3T</option>
+                            <option value="Muda">Muda</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Area / Mesin</label>
+                        <select id="filterLoc" class="form-select form-select-sm bg-light"><option value="">Semua Lokasi</option></select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Urutkan Berdasarkan</label>
+                        <select id="filterSort" class="form-select form-select-sm bg-light">
+                            <option value="newest">Report Terbaru</option>
+                            <option value="oldest">Report Terlama</option>
+                            <option value="due_closest">Due Date Terdekat</option>
+                            <option value="due_farthest">Due Date Terlama</option>
+                            <option value="overdue_first" class="text-danger fw-bold">Prioritas Overdue</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold shadow-sm w-100 rounded-3"><i class="fa-solid fa-magnifying-glass me-1"></i> Cari</button>
+                        <button type="button" onclick="resetFilter()" class="btn btn-outline-secondary btn-sm shadow-sm rounded-3" title="Reset"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TABEL DATA UTAMA -->
+        <div class="premium-card overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="table-layout: fixed; min-width: 1050px;">
+                    <thead class="table-dark text-uppercase align-middle" style="font-size: 11px; letter-spacing: 0.5px;">
+                        <tr>
+                            <th class="text-center py-3" style="width: 5%;">No<br><span class="text-secondary fw-normal">番号</span></th>
+                            <th style="width: 18%;">Detail Patrol<br><span class="text-secondary fw-normal">巡回詳細</span></th>
+                            <th style="width: 25%;">Temuan (Before)<br><span class="text-secondary fw-normal">発見（改善前）</span></th>
+                            <th style="width: 25%;">Tindakan (After)<br><span class="text-secondary fw-normal">対策（改善後）</span></th>
+                            <th style="width: 12%;">Timeline<br><span class="text-secondary fw-normal">スケジュール</span></th>
+                            <th class="text-center" style="width: 15%;">Status & Aksi<br><span class="text-secondary fw-normal">状態・操作</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border text-primary"></div><br>Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+        // Kamus Warna Eksekutif (Sinkron 100% dengan PHP)
+        const typeColors = { 'Safety': '#dc3545', 'Environment': '#198754', 'Quality': '#0d6efd', 'Productivity': '#ffc107', '5S & 2S3T': '#6f42c1', 'Muda': '#fd7e14', 'Lainnya': '#6c757d' };
+        const patrolColors = { '123 Patrol': '#0dcaf0', 'PD Patrol': '#e83e8c', 'Cross Patrol': '#212529', 'Management Patrol': '#6610f2' };
+        
+        let charts = {};
+
+        // Inisialisasi
+        window.onload = () => {
+            const userName = localStorage.getItem('user_name');
+            if (userName) document.getElementById('userName').innerText = userName;
+            loadDashboardData(true); // True = load filter master data
+        };
+
+        function resetFilter() {
+            document.getElementById('filterForm').reset();
+            loadDashboardData();
+        }
+
+        function formatDate(dateStr) {
+            if(!dateStr) return '-';
+            const d = new Date(dateStr);
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            return `${String(d.getDate()).padStart(2,'0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        async function loadDashboardData(isInit = false) {
+            // Build Query Params
+            const p = new URLSearchParams();
+            if(document.getElementById('filterCat').value) p.append('category_id', document.getElementById('filterCat').value);
+            if(document.getElementById('filterLoc').value) p.append('location_id', document.getElementById('filterLoc').value);
+            if(document.getElementById('filterType').value) p.append('finding_type', document.getElementById('filterType').value);
+            if(document.getElementById('filterStatus').value) p.append('status', document.getElementById('filterStatus').value);
+            if(document.getElementById('filterSort').value) p.append('sort', document.getElementById('filterSort').value);
+
+            try {
+                const res = await fetch(`/api/dashboard-main?${p.toString()}`);
+                const data = await res.json();
+                if(data.status !== 'success') throw new Error(data.message);
+
+                // 1. Populate Dropdowns (Hanya sekali di awal)
+                if (isInit) {
+                    const catSel = document.getElementById('filterCat');
+                    data.dropdowns.categories.forEach(c => catSel.add(new Option(c.name, c.id)));
+                    const locSel = document.getElementById('filterLoc');
+                    data.dropdowns.locations.forEach(l => locSel.add(new Option(l.name, l.id)));
+                }
+
+                // 2. Render KPIs
+                document.getElementById('kpiTotal').innerText = data.kpi.total_all;
+                document.getElementById('kpiOpen').innerText = data.kpi.total_open;
+                document.getElementById('kpiClosed').innerText = data.kpi.total_closed;
+
+                // 3. Render Table
+                let tHTML = '';
+                if(data.table.length === 0) {
+                    tHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fa-solid fa-folder-open fs-2 mb-3 d-block opacity-50"></i> Belum ada data yang cocok dengan filter.</td></tr>`;
+                } else {
+                    data.table.forEach((row, i) => {
+                        const isOverdue = (row.status === 'Open' && row.due_date && row.due_date.split('T')[0] < data.today);
+                        
+                        const pColor = patrolColors[row.category_name] || '#6c757d';
+                        const tName = row.finding_type || 'Lainnya';
+                        const tColor = typeColors[tName] || '#6c757d';
+                        const kzIcon = row.is_kaizen === 'Yes' ? '<i class="fa-solid fa-check text-success ms-1" title="Kaizen Resmi"></i>' : '';
+                        
+                        let photoBef = row.photo ? `<a href="/uploads/${row.photo}" target="_blank" class="flex-shrink-0"><img src="/uploads/${row.photo}" class="img-thumbnail-custom"></a>` : '';
+                        let photoAft = row.picture_after_improved ? `<a href="/uploads/${row.picture_after_improved}" target="_blank" class="flex-shrink-0"><img src="/uploads/${row.picture_after_improved}" class="img-thumbnail-custom border-success"></a>` : '';
+                        let actionRes = (row.status === 'Closed' || row.countermeasure) ? `<div class="d-flex gap-2 align-items-start">${photoAft}<div class="text-success fw-semibold text-wrap" style="font-size: 12px; line-height: 1.4; max-height: 60px; overflow-y: auto;">${row.countermeasure||''}</div></div>` : `<span class="text-muted fst-italic" style="font-size: 11px;"><i class="fa-solid fa-clock text-warning"></i> Menunggu tindakan...</span>`;
+                        
+                        let statusBadge = row.status === 'Closed' 
+                            ? `<span class="badge bg-success shadow-sm w-100 py-2"><i class="fa-solid fa-check-circle me-1"></i> CLOSED ${kzIcon}</span>`
+                            : `<span class="badge ${isOverdue ? 'bg-danger' : 'bg-warning text-dark'} shadow-sm w-100 py-2">${isOverdue ? '<i class="fa-solid fa-triangle-exclamation me-1"></i> OVERDUE' : '<i class="fa-solid fa-hourglass-half me-1"></i> OPEN'}</span>`;
+                        
+                        let actionBtns = `
+                            <a href="view.html?id=${row.id}" class="btn btn-sm btn-outline-info px-2"><i class="fa-solid fa-eye"></i></a>
+                            <a href="edit.html?id=${row.id}" class="btn btn-sm btn-outline-primary px-2"><i class="fa-solid fa-pen"></i></a>
+                            ${row.status === 'Open' ? `<a href="finish.html?id=${row.id}" class="btn btn-sm btn-success px-2"><i class="fa-solid fa-check"></i></a>` : ''}
+                            <button onclick="if(confirm('Yakin hapus data ini?')) window.location.href='/api/delete?id=${row.id}'" class="btn btn-sm btn-outline-danger px-2"><i class="fa-solid fa-trash-can"></i></button>
+                        `;
+
+                        tHTML += `
+                            <tr class="${isOverdue ? 'table-overdue' : ''}">
+                                <td class="text-center text-muted fw-bold">${i+1}</td>
+                                <td>
+                                    <span class="custom-badge shadow-sm mb-2 d-inline-block" style="background-color: ${pColor};">${row.category_name||'-'}</span><br>
+                                    <small class="fw-bold text-dark d-block text-truncate"><i class="fa-solid fa-location-dot text-danger me-1"></i> ${row.location_name||'-'}</small>
+                                    <small class="text-muted"><i class="fa-solid fa-user-gear text-secondary me-1"></i> ${row.section_name||'-'}</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2 align-items-start">
+                                        ${photoBef}
+                                        <div class="w-100">
+                                            <span class="custom-badge shadow-sm mb-1 d-inline-block" style="background-color: ${tColor}; color: ${tName==='Productivity'?'#000':'#fff'};"><i class="fa-solid fa-tag"></i> ${tName}</span>
+                                            <div class="text-wrap text-dark" style="font-size: 12px; line-height: 1.4; max-height: 60px; overflow-y: auto;">${row.problem_description||'-'}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>${actionRes}</td>
+                                <td style="font-size: 11px;">
+                                    <div class="text-muted mb-1"><span class="fw-bold">Report:</span><br>${formatDate(row.created_at)}</div>
+                                    <div class="${isOverdue ? 'text-danger fw-bold' : 'text-dark'} mb-1"><span class="fw-bold">Due Date:</span><br>${formatDate(row.due_date)}</div>
+                                    ${row.finish_date ? `<div class="text-success mb-1"><span class="fw-bold">Finish:</span><br>${formatDate(row.finish_date)}</div>` : ''}
+                                </td>
+                                <td class="text-center">
+                                    <div class="mb-2">${statusBadge}</div>
+                                    <div class="d-flex justify-content-center gap-1">${actionBtns}</div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                document.getElementById('tableBody').innerHTML = tHTML;
+
+                // 4. Render Charts (Sync Color)
+                renderCharts(data.charts);
+
+            } catch(e) { 
+                console.error(e); 
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">Gagal memuat data. Periksa koneksi server.</td></tr>`;
+            }
+        }
+
+        // --- FUNGSI RENDER CHART ---
+        function renderCharts(cData) {
+            // Chart 1: Section (Bar)
+            const secLabels = cData.sec.map(d => d.name);
+            const secData = cData.sec.map(d => d.total);
+            initChart('sectionChart', 'bar', { labels: secLabels, datasets: [{ data: secData, backgroundColor: 'rgba(10, 25, 47, 0.85)', borderRadius: 4 }] }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x:{grid:{display:false}, ticks:{font:{size:10}}}, y: { beginAtZero: true, grid:{borderDash:[5,5]} } } });
+
+            // Chart 2: Category (Doughnut - Sync Color)
+            const catLabels = cData.cat.map(d => d.name);
+            const catColors = catLabels.map(l => patrolColors[l] || '#6c757d');
+            initChart('categoryChart', 'doughnut', { labels: catLabels, datasets: [{ data: cData.cat.map(d=>d.total), backgroundColor: catColors, borderWidth: 1 }] }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font:{size:10} } } }, cutout: '60%' });
+
+            // Chart 3: Type (Doughnut - Sync Color)
+            const typeLabels = cData.type.map(d => d.name);
+            const typeBgColors = typeLabels.map(l => typeColors[l] || '#6c757d');
+            initChart('findingTypeChart', 'doughnut', { labels: typeLabels, datasets: [{ data: cData.type.map(d=>d.total), backgroundColor: typeBgColors, borderWidth: 1 }] }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font:{size:10} } } }, cutout: '60%' });
+        }
+
+        function initChart(id, type, data, options) {
+            if (charts[id]) charts[id].destroy();
+            charts[id] = new Chart(document.getElementById(id), { type, data, options });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.N.A.P.S - Executive Portal</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Reset & Body Setting - ZERO SCROLLING */
+        body, html { 
+            margin: 0; padding: 0; height: 100vh; overflow: hidden; 
+            font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f1115; color: white;
+        }
+
+        /* Top Bar Floating */
+        .portal-header {
+            position: absolute; top: 0; left: 0; width: 100%; padding: 25px 40px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 100;
+        }
+
+        /* Container Pilar Flexbox */
+        .pillar-container {
+            display: flex; height: 100vh; width: 100vw; padding: 90px 20px 20px 20px; gap: 15px;
+        }
+
+        /* Desain Pilar Dasar */
+        .pillar {
+            flex: 1; /* Lebar default sama rata */
+            border-radius: 30px; position: relative; overflow: hidden; cursor: pointer;
+            transition: all 0.7s cubic-bezier(0.25, 1, 0.2, 1); /* Animasi Super Smooth */
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        /* Saat Pilar Disorot (HOVER) -> Melebar! */
+        .pillar:hover { flex: 4; }
+
+        /* Background Gradasi Eksklusif per Pilar */
+        .bg-ops { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+        .bg-kaizen { background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%); }
+        .bg-ai { background: linear-gradient(135deg, #d41459 0%, #911a6c 100%); }
+        .bg-mfa { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+        /* Teks Judul Utama di Tengah Pilar */
+        .pillar-title-main {
+            text-align: center; transition: all 0.5s ease; position: absolute;
+        }
+        .pillar-title-main i { font-size: 3.5rem; margin-bottom: 15px; display: block; opacity: 0.8; }
+        .pillar-title-main h3 { font-weight: 800; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; margin: 0; white-space: nowrap;}
+        
+        /* Hilangkan judul utama saat melebar */
+        .pillar:hover .pillar-title-main { opacity: 0; transform: translateY(-30px); }
+
+        /* Konten Tersembunyi (Muncul saat pilar melebar) */
+        .pillar-content {
+            opacity: 0; position: absolute; bottom: -50px; left: 50px; width: 450px;
+            transition: all 0.5s ease; transition-delay: 0s; pointer-events: none;
+        }
+        .pillar:hover .pillar-content {
+            opacity: 1; bottom: 50px; transition-delay: 0.2s; pointer-events: auto;
+        }
+
+        /* Styling Konten Dalam */
+        .content-badge { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 15px; display: inline-block; backdrop-filter: blur(5px);}
+        .content-title { font-size: 2.8rem; font-weight: 900; line-height: 1.1; margin-bottom: 15px; }
+        .content-desc { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 30px; line-height: 1.6; }
+
+        /* Tombol Aksi */
+        .btn-glass {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+            color: white; padding: 12px 25px; border-radius: 50px; font-weight: 600;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
+            transition: all 0.3s ease; backdrop-filter: blur(10px); margin-right: 10px; margin-bottom: 10px;
+        }
+        .btn-glass:hover { background: white; color: black; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+
+        /* Responsif untuk layar kecil/mobile (Berubah jadi baris susun bawah) */
+        @media (max-width: 992px) {
+            .pillar-container { flex-direction: column; padding: 80px 15px 15px 15px; }
+            .pillar-content { left: 30px; width: calc(100% - 60px); }
+            .content-title { font-size: 2rem; }
+            .pillar-title-main h3 { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Mengambang -->
+    <div class="portal-header">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-industry fs-3 text-white"></i>
+            <div>
+                <h4 class="mb-0 fw-bold letter-spacing-1">S.I.N.A.P.S</h4>
+            </div>
+        </div>
+        <div class="text-end">
+            <div class="small text-white-50 text-uppercase fw-bold letter-spacing-1">Executive Access</div>
+            <div class="fw-bold fs-5" id="userName">GUEST</div>
+        </div>
+    </div>
+
+    <!-- Container Pilar Fleksibel -->
+    <div class="pillar-container">
+        
+        <!-- PILAR 1: OPERATIONS -->
+        <div class="pillar bg-ops">
+            <div class="pillar-title-main">
+                <i class="fa-solid fa-gauge-high"></i>
+                <h3>01. Patrol</h3>
+            </div>
+            <div class="pillar-content">
+                <span class="content-badge">DAILY OPERATIONS</span>
+                <h1 class="content-title">Genba<br>Patrol Hub.</h1>
+                <p class="content-desc">Pusat pelaporan dan pemantauan harian. Pantau grafik penutupan masalah, dan laporkan temuan baru langsung dari lapangan.</p>
+                <div>
+                    <a href="dashboard.html" class="btn-glass"><i class="fa-solid fa-chart-line"></i> Buka Dashboard</a>
+                    <a href="add.html" class="btn-glass"><i class="fa-solid fa-plus"></i> Input Temuan</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- PILAR 2: KAIZEN -->
+        <div class="pillar bg-kaizen">
+            <div class="pillar-title-main">
+                <i class="fa-solid fa-lightbulb"></i>
+                <h3>02. Kaizen</h3>
+            </div>
+            <div class="pillar-content">
+                <span class="content-badge">IMPROVEMENT TOWER</span>
+                <h1 class="content-title">SGA &<br>Dept Target.</h1>
+                <p class="content-desc">Sistem kendali Kaizen korporat. Lakukan persetujuan (Triage) ide baru dan pantau pergerakan Small Group Activity (SGA).</p>
+                <div>
+                    <a href="sga_dashboard.html" class="btn-glass"><i class="fa-solid fa-users-gear"></i> SGA Tower</a>
+                    <a href="dept_dashboard.html" class="btn-glass"><i class="fa-solid fa-bullseye"></i> Dept Target</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- PILAR 3: ANALYTICS & AI -->
+        <div class="pillar bg-ai">
+            <div class="pillar-title-main">
+                <i class="fa-solid fa-brain"></i>
+                <h3>03. AI & Stats</h3>
+            </div>
+            <div class="pillar-content">
+                <span class="content-badge">DATA SCIENCE LAB</span>
+                <h1 class="content-title">Smart<br>Analytics.</h1>
+                <p class="content-desc">Visualisasi performa global tahunan dan mesin <b>Natural Language Processing (NLP)</b> untuk mendeteksi masalah berulang otomatis.</p>
+                <div>
+                    <a href="statistik.html" class="btn-glass"><i class="fa-solid fa-chart-pie"></i> Statistik Global</a>
+                    <a href="ai_recurring.html" class="btn-glass"><i class="fa-solid fa-robot"></i> AI Detector</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- PILAR 4: MONOZUKURI -->
+        <div class="pillar bg-mfa">
+            <div class="pillar-title-main">
+                <i class="fa-solid fa-ranking-star"></i>
+                <h3>04. MFA Audit</h3>
+            </div>
+            <div class="pillar-content">
+                <span class="content-badge">MMEU STANDARDS</span>
+                <h1 class="content-title">Monozukuri<br>Assessment.</h1>
+                <p class="content-desc">Dasbor pelacakan 5-Pilar pabrik. Evaluasi 50 titik kritis dengan Heatmap visual untuk persiapan audit MMEU/SEI.</p>
+                <div>
+                    <a href="mfa_dashboard.html" class="btn-glass"><i class="fa-solid fa-spider"></i> MFA Dashboard</a>
+                    <a href="mfa_input.html" class="btn-glass"><i class="fa-solid fa-clipboard-check"></i> Input Audit</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Tarik nama dari Login
+        window.onload = () => {
+            const userName = localStorage.getItem('user_name');
+            if (userName) {
+                document.getElementById('userName').innerText = userName.toUpperCase();
+            }
+        };
+    </script>
+</body>
+</html>

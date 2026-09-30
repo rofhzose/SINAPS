@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Temuan & Kaizen</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <style>
+        .type-selector { display: none; }
+        .type-label { cursor: pointer; border: 2px solid #e9ecef; transition: all 0.2s; }
+        .type-selector:checked + .type-label { border-color: #0d6efd; background-color: #f8fbff; transform: scale(1.02); }
+        .type-selector:checked + .type-label.kaizen-card { border-color: #198754; background-color: #f4fdf8; }
+        .form-section { display: none; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-light pb-5">
+    <div class="container mt-4" style="max-width: 800px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold"><i class="fa-solid fa-pen-to-square text-primary me-2"></i> Form Pelaporan Terpadu</h4>
+            <a href="dashboard.html" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i> Kembali</a>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4 text-center">
+                <h5 class="fw-bold mb-3">Apa yang ingin Anda laporkan hari ini?</h5>
+                <div class="row g-3 justify-content-center">
+                    <div class="col-md-5">
+                        <input type="radio" name="form_chooser" id="choose_temuan" class="type-selector" onchange="toggleForm('temuan')">
+                        <label for="choose_temuan" class="type-label card h-100 rounded-4">
+                            <div class="card-body py-4">
+                                <i class="fa-solid fa-triangle-exclamation fs-1 text-danger mb-2"></i>
+                                <h6 class="fw-bold text-dark">Temuan Patrol</h6>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="col-md-5">
+                        <input type="radio" name="form_chooser" id="choose_kaizen" class="type-selector" onchange="toggleForm('kaizen')">
+                        <label for="choose_kaizen" class="type-label kaizen-card card h-100 rounded-4">
+                            <div class="card-body py-4">
+                                <i class="fa-solid fa-lightbulb fs-1 text-success mb-2"></i>
+                                <h6 class="fw-bold text-dark">Kaizen / Improvement</h6>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM 1: TEMUAN -->
+        <div id="formTemuan" class="form-section card border-0 shadow-sm rounded-4 border-top border-danger border-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-danger mb-4"><i class="fa-solid fa-triangle-exclamation me-2"></i> Form Temuan Patrol</h5>
+                <form id="formTemuanAsli">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tanggal Temuan</label>
+                            <input type="date" name="created_at" class="form-control" id="todayDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Due Date (Target Selesai)</label>
+                            <input type="date" name="due_date" class="form-control" id="dueDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Jenis Patrol</label>
+                            <select name="category_id" class="form-select dropdown-category" required><option value="">-- Memuat... --</option></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tipe Temuan</label>
+                            <select name="finding_type" class="form-select" required>
+                                <option value="Safety">Safety</option><option value="Environment">Environment</option>
+                                <option value="Quality">Quality</option><option value="Productivity">Productivity</option>
+                                <option value="5S & 2S3T">5S & 2S3T</option><option value="Muda">Muda</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Lokasi / Area</label>
+                            <select name="location_id" class="form-select dropdown-location" required><option value="">-- Memuat... --</option></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Seksi PIC</label>
+                            <select name="pic_section_id" class="form-select dropdown-section" required><option value="">-- Memuat... --</option></select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Deskripsi Masalah</label>
+                            <textarea name="problem_description" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Foto Temuan (Opsional)</label>
+                            <input type="file" name="photo" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-danger fw-bold mt-4 w-100">Simpan Temuan</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- FORM 2: KAIZEN -->
+        <div id="formKaizen" class="form-section card border-0 shadow-sm rounded-4 border-top border-success border-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-success mb-4"><i class="fa-solid fa-lightbulb me-2"></i> Form Kaizen</h5>
+                <form id="formKaizenAsli">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Sumber Inisiatif</label>
+                            <select name="source" class="form-select border-success" required>
+                                <option value="Suggestion Scheme">Suggestion Scheme (SS)</option>
+                                <option value="Internal Improvement">Internal Dept Improvement</option>
+                                <option value="RBS">Request By Section (RBS)</option>
+                                <option value="SGA">Small Group Activity (SGA)</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Seksi Pelaksana</label>
+                            <select name="kaizen_section_id" class="form-select dropdown-section" required><option value="">-- Memuat... --</option></select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Judul / Tema Kaizen</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mt-4">
+                            <h6 class="fw-bold text-danger mb-3">Kondisi BEFORE (Sebelum)</h6>
+                            <textarea name="condition_before" class="form-control mb-2" rows="3" required></textarea>
+                            <input type="file" name="photo_before" class="form-control" accept="image/*">
+                        </div>
+                        <div class="col-md-6 mt-4">
+                            <h6 class="fw-bold text-success mb-3">Kondisi AFTER (Sesudah)</h6>
+                            <textarea name="condition_after" class="form-control mb-2" rows="3"></textarea>
+                            <input type="file" name="photo_after" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success fw-bold mt-4 w-100">Simpan Kaizen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleForm(type) {
+            document.getElementById('formTemuan').style.display = type === 'temuan' ? 'block' : 'none';
+            document.getElementById('formKaizen').style.display = type === 'kaizen' ? 'block' : 'none';
+        }
+
+        // Set Tanggal Hari Ini & Due Date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('todayDate').value = today;
+        let due = new Date(); due.setDate(due.getDate() + 3);
+        document.getElementById('dueDate').value = due.toISOString().split('T')[0];
+
+        // Tarik Master Data untuk Dropdown
+        async function loadDropdowns() {
+            try {
+                const res = await fetch('/api/master-data');
+                const data = await res.json();
+                if(data.status === 'success') {
+                    const fill = (selector, list) => {
+                        let html = '<option value="">-- Pilih --</option>';
+                        list.forEach(item => html += `<option value="${item.id}">${item.name}</option>`);
+                        document.querySelectorAll(selector).forEach(el => el.innerHTML = html);
+                    };
+                    fill('.dropdown-category', data.data.categories);
+                    fill('.dropdown-location', data.data.locations);
+                    fill('.dropdown-section', data.data.sections);
+                }
+            } catch (err) { console.error("Gagal load data dropdown", err); }
+        }
+        loadDropdowns();
+
+        // Handle Submit Temuan
+        document.getElementById('formTemuanAsli').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('button'); btn.disabled = true; btn.innerText = "Menyimpan...";
+            const formData = new FormData(this);
+            try {
+                const response = await fetch('/api/web/temuan', { method: 'POST', body: formData });
+                const result = await response.json();
+                if(result.status === 'success') { alert(result.message); window.location.href = 'dashboard.html'; }
+                else { alert('Gagal: ' + result.message); }
+            } catch(err) { alert('Error koneksi!'); }
+            btn.disabled = false; btn.innerText = "Simpan Temuan";
+        });
+
+        // Handle Submit Kaizen
+        document.getElementById('formKaizenAsli').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('button'); btn.disabled = true; btn.innerText = "Menyimpan...";
+            const formData = new FormData(this);
+            try {
+                const response = await fetch('/api/web/kaizen', { method: 'POST', body: formData });
+                const result = await response.json();
+                if(result.status === 'success') { alert(result.message); window.location.href = 'dashboard.html'; }
+                else { alert('Gagal: ' + result.message); }
+            } catch(err) { alert('Error koneksi!'); }
+            btn.disabled = false; btn.innerText = "Simpan Kaizen";
+        });
+    </script>
+</body>
+</html>

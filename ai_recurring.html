@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Recurring Detector</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <style>
+        .ai-glow { box-shadow: 0 0 15px rgba(220, 53, 69, 0.4); border: 2px solid #dc3545; }
+        .keyword-tag { background-color: #e9ecef; color: #495057; font-size: 11px; padding: 3px 8px; border-radius: 12px; margin-right: 4px; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-light pb-5">
+<!-- MODAL ESKALASI SGA -->
+<div class="modal fade" id="modalSGA" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-dark text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-bolt text-warning me-2"></i> Form Registrasi SGA Otomatis</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEskalasiSGA">
+                <div class="modal-body p-4 bg-light">
+                    <div class="alert alert-danger small fw-bold mb-3">
+                        <i class="fa-solid fa-robot me-1"></i> AI telah mengisi data awal berdasarkan temuan berulang.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Judul Proyek SGA</label>
+                        <input type="text" name="title" id="sgaTitle" class="form-control fw-bold" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Seksi Pelaksana</label>
+                        <input type="text" name="section" id="sgaSection" class="form-control bg-white" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Kondisi Saat Ini (Kumpulan Temuan)</label>
+                        <textarea name="condition_before" id="sgaCondition" class="form-control" rows="4" readonly></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning fw-bold text-dark"><i class="fa-solid fa-rocket me-1"></i> Buat Proyek SGA</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+    <div class="container-fluid mt-4 px-4">
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+            <div>
+                <h3 class="fw-bold text-dark mb-0"><i class="fa-solid fa-brain text-danger me-2"></i> AI Recurring Hazard Detector</h3>
+                <p class="text-muted mb-0 mt-1">Pemindaian otomatis menggunakan Natural Language Processing (NLP) lokal</p>
+            </div>
+            <a href="dashboard.html" class="btn btn-outline-secondary fw-bold shadow-sm"><i class="fa-solid fa-arrow-left me-1"></i> Kembali</a>
+        </div>
+
+        <div id="loading" class="text-center py-5">
+            <div class="spinner-border text-danger" role="status"></div>
+            <p class="text-muted mt-2 fw-bold">AI sedang membaca dan membandingkan seluruh laporan...</p>
+        </div>
+
+        <!-- TEMPAT HASIL AI -->
+        <div class="row g-4" id="ai-results"></div>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function runAI() {
+            try {
+                const res = await fetch('/api/ai/recurring');
+                const result = await res.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                const container = document.getElementById('ai-results');
+
+                if (result.status === 'success' && result.data.length > 0) {
+                    result.data.forEach(cluster => {
+                        let similarHTML = '';
+                        cluster.similar_cases.forEach(sim => {
+                            similarHTML += `
+                                <div class="bg-light p-2 mb-2 rounded border-start border-danger border-3">
+                                    <div class="small fw-semibold">"${sim.problem}"</div>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <span class="text-muted" style="font-size: 10px;">ID: #${sim.id} | ${sim.date.split('T')[0]}</span>
+                                        <span class="text-danger fw-bold" style="font-size: 10px;">Match: ${sim.score}%</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        const keywordsHTML = cluster.keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('');
+
+                        container.innerHTML += `
+                            <div class="col-lg-6">
+                                <div class="card border-0 shadow-sm rounded-4 h-100 ${cluster.count >= 3 ? 'ai-glow' : ''}">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <span class="badge bg-danger mb-2"><i class="fa-solid fa-triangle-exclamation"></i> REPEAT OFFENSE: ${cluster.count}x</span>
+                                                <h6 class="fw-bold text-dark"><i class="fa-solid fa-location-dot text-danger me-1"></i> ${cluster.location}</h6>
+                                                <small class="text-muted"><i class="fa-solid fa-user-gear me-1"></i> ${cluster.section}</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-dark fw-bold shadow-sm" onclick="bukaModalSGA('${cluster.section}', '${cluster.base_problem}', '${cluster.location}')">
+                                                    <i class="fa-solid fa-bolt text-warning me-1"></i> Eskalasi SGA
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <p class="fw-semibold text-dark mb-1">Kasus Utama:</p>
+                                            <div class="fst-italic text-secondary">"${cluster.base_problem}"</div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <span class="small fw-bold text-muted d-block mb-1">Keywords Terdeteksi AI:</span>
+                                            ${keywordsHTML}
+                                        </div>
+
+                                        <hr>
+                                        <p class="fw-bold text-danger small mb-2">Riwayat Pengulangan:</p>
+                                        ${similarHTML}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = `<div class="col-12 text-center text-success py-5"><i class="fa-solid fa-shield-check fs-1 mb-3"></i><br><h5 class="fw-bold">Pabrik Aman!</h5><p>AI tidak menemukan adanya temuan berulang di lokasi yang sama.</p></div>`;
+                }
+            } catch(err) {
+                console.error("AI Error:", err);
+            }
+        }
+        // Fungsi membuka Modal dan mengisi data AI
+        function bukaModalSGA(section, problem, location) {
+            document.getElementById('sgaTitle').value = `Penanggulangan Area ${location}`;
+            document.getElementById('sgaSection').value = section;
+            document.getElementById('sgaCondition').value = `Masalah kronis terdeteksi berulang oleh AI:\n"${problem}"`;
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalSGA'));
+            modal.show();
+        }
+
+        // Fungsi kirim data ke API
+        document.getElementById('formEskalasiSGA').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('button[type="submit"]');
+            btn.innerHTML = 'Memproses...'; btn.disabled = true;
+
+            const data = Object.fromEntries(new FormData(this));
+            
+            try {
+                const res = await fetch('/api/sga/escalate', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    alert(result.message);
+                    window.location.href = 'dashboard.html'; // Pindah ke dashboard untuk melihat hasilnya
+                } else {
+                    alert('Gagal: ' + result.message);
+                }
+            } catch (err) { alert('Error: ' + err.message); }
+            
+            btn.innerHTML = '<i class="fa-solid fa-rocket me-1"></i> Buat Proyek SGA'; btn.disabled = false;
+        });
+        window.onload = runAI;
+    </script>
+</body>
+</html>

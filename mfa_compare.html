@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MFA Gap Analysis - Sumitomo</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <script src="/js/chart.umd.js"></script>
+    <style>
+        .card-gap { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .score-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: white; margin: 0 auto; }
+        .bg-mandiri { background-color: #6c757d; }
+        .bg-pre { background-color: #fd7e14; }
+        .bg-mmeu { background-color: #0d6efd; }
+        @keyframes pulse-alert {
+            0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            50% { transform: scale(1.05); opacity: 0.8; box-shadow: 0 0 0 5px rgba(220, 53, 69, 0); }
+            100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+        .badge-pulse { animation: pulse-alert 2s infinite; }
+    </style>
+</head>
+<body class="bg-light pb-5">
+
+<div class="container-fluid mt-4 px-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div>
+            <h3 class="fw-bold text-dark mb-1"><i class="fa-solid fa-scale-balanced text-warning me-2"></i> Reality Check: Gap Analysis</h3>
+            <p class="text-muted mb-0">Komparasi Penilaian Mandiri vs SECJ (Pre-Audit) vs Auditor MMEU</p>
+        </div>
+        <div class="d-flex gap-2">
+            <select id="yearFilter" class="form-select fw-bold border-primary text-primary" style="width: 150px;">
+                <option value="2026">Tahun 2026</option>
+            </select>
+            <a href="mfa_dashboard.html" class="btn btn-outline-secondary fw-bold shadow-sm"><i class="fa-solid fa-arrow-left me-1"></i> Kembali</a>
+        </div>
+    </div>
+
+    <!-- ROW 1: Grand Score Comparison -->
+    <div class="row g-4 mb-4 text-center">
+        
+        <!-- 1. KARTU MANDIRI -->
+        <div class="col-md-4">
+            <div class="card card-gap h-100 border-top border-secondary border-4">
+                <div class="card-body p-4 d-flex flex-column">
+                    <h6 class="text-uppercase fw-bold text-muted mb-2">1. Mandiri (Self)</h6>
+                    <div class="d-flex align-items-center justify-content-center my-2 gap-2">
+                        <h1 class="display-4 fw-bold text-dark mb-0" id="totalMandiri">0</h1>
+                        <span class="fs-6 fw-bold text-muted mt-2 pt-1">Poin</span>
+                        <div class="mt-1 badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 fs-6 shadow-sm">
+                            Skor: <span id="avgMandiri">0.00</span> / 4.0
+                        </div>
+                    </div>
+                    <!-- Indikator Trend -->
+                    <div class="mb-3 fw-bold" id="trendMandiri" style="font-size: 15px;">
+                        <span class="text-muted"><i class="fa-solid fa-minus"></i> 0 vs Tahun Lalu</span>
+                    </div>
+                    <!-- Auto-Deskripsi -->
+                    <div class="mt-auto p-3 bg-light rounded text-start border border-light-subtle">
+                        <span class="badge bg-secondary mb-2">Insight Analisis</span>
+                        <p class="small text-muted mb-0 lh-sm" id="descMandiri" style="font-size: 12px;">Memuat perbandingan dengan tahun lalu...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. KARTU PRE-AUDIT -->
+        <div class="col-md-4">
+            <div class="card card-gap h-100 border-top border-warning border-4" style="border-color: #fd7e14 !important;">
+                <div class="card-body p-4 d-flex flex-column">
+                    <h6 class="text-uppercase fw-bold text-muted mb-0">2. Pre-Audit (SECJ)</h6>
+                    <small class="text-warning fw-bold mb-2"><i class="fa-solid fa-user-tie me-1"></i>Mr. Shogo Sakaguchi</small>
+                    
+                    <div class="d-flex align-items-center justify-content-center my-2 gap-2">
+                        <h1 class="display-4 fw-bold text-dark mb-0" id="totalPre">0</h1>
+                        <span class="fs-6 fw-bold text-muted mt-2 pt-1">Poin</span>
+                        <div class="mt-1 badge bg-warning bg-opacity-10 text-dark border border-warning fs-6 shadow-sm">
+                            Skor: <span id="avgPre">0.00</span> / 4.0
+                        </div>
+                    </div>
+                    <!-- Indikator Trend -->
+                    <div class="mb-3 fw-bold" id="trendPre" style="font-size: 15px;">
+                        <span class="text-muted"><i class="fa-solid fa-minus"></i> 0 vs Mandiri</span>
+                    </div>
+                    <!-- Auto-Deskripsi -->
+                    <div class="mt-auto p-3 bg-warning bg-opacity-10 rounded text-start border border-warning border-opacity-25">
+                        <span class="badge bg-warning text-dark mb-2">Koreksi SECJ</span>
+                        <p class="small text-dark mb-0 lh-sm" id="descPre" style="font-size: 12px;">Memuat hasil penyelarasan dari SECJ...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. KARTU MMEU -->
+        <div class="col-md-4">
+            <div class="card card-gap h-100 border-top border-primary border-4">
+                <div class="card-body p-4 d-flex flex-column">
+                    <h6 class="text-uppercase fw-bold text-primary mb-2">3. MMEU (Auditor Jepang)</h6>
+                    <div class="d-flex align-items-center justify-content-center my-2 gap-2">
+                        <h1 class="display-4 fw-bold text-primary mb-0" id="totalMmeu">0</h1>
+                        <span class="fs-6 fw-bold text-muted mt-2 pt-1">Poin</span>
+                        <div class="mt-1 badge bg-primary bg-opacity-10 text-primary border border-primary fs-6 shadow-sm">
+                            Skor: <span id="avgMmeu">0.00</span> / 4.0
+                        </div>
+                    </div>
+                    <!-- Indikator Trend -->
+                    <div class="mb-3 fw-bold" id="trendMmeu" style="font-size: 15px;">
+                        <span class="text-muted"><i class="fa-solid fa-minus"></i> 0 vs Mandiri</span>
+                    </div>
+                    <!-- Auto-Deskripsi -->
+                    <div class="mt-auto p-3 bg-primary bg-opacity-10 rounded text-start border border-primary border-opacity-25">
+                        <span class="badge bg-primary mb-2">Final Reality Check</span>
+                        <p class="small text-dark mb-0 lh-sm" id="descMmeu" style="font-size: 12px;">Memuat evaluasi akhir MMEU...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- ROW 2: Visualisasi Komparasi (Makro vs Mikro) -->
+    <div class="row g-4 mb-4">
+        
+        <!-- BAGIAN KIRI: Radar Chart (Makro / Per Pilar) -->
+        <div class="col-lg-4">
+            <div class="card card-gap h-100">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-spider text-primary me-2"></i>Gap Radar (Makro 5 Pilar)</h6>
+                </div>
+                <div class="card-body d-flex justify-content-center pt-0" style="height: 350px;">
+                    <canvas id="gapRadarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- BAGIAN KANAN: Line Chart (Mikro / Per 50 Item) -->
+        <div class="col-lg-8">
+            <div class="card card-gap h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom-0">
+                    <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-chart-line text-warning me-2"></i>Item-by-Item Gap Trend (50 Points)</h6>
+                    <span class="badge bg-light text-dark border small"><i class="fa-solid fa-arrows-left-right me-1"></i>Geser grafik</span>
+                </div>
+                <div class="card-body pt-0">
+                    <!-- Bungkus dengan overflow-x agar 50 titik tidak berdesakan dan bisa di-scroll ke samping -->
+                    <div style="width: 100%; height: 330px; overflow-x: auto; overflow-y: hidden;">
+                        <div style="min-width: 1000px; height: 100%; padding-right: 15px;">
+                            <canvas id="itemGapChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- ROW 3: Tabel Detail Gap 50 Poin -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-gap">
+                <div class="card card-gap border-top border-dark border-4">
+                <!-- SMART COMMAND BAR -->
+                <div class="card-header bg-white py-3 d-flex flex-column flex-xl-row justify-content-between align-items-center gap-3 border-bottom">
+                    <h6 class="fw-bold mb-0 text-dark w-100"><i class="fa-solid fa-list-check text-warning me-2"></i>Item-by-Item Verification</h6>
+                    
+                    <div class="d-flex flex-wrap flex-md-nowrap w-100 gap-2 justify-content-xl-end">
+                        <!-- 1. Search Box -->
+                        <div class="input-group input-group-sm w-auto shadow-sm">
+                            <span class="input-group-text bg-light border-secondary border-opacity-25"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                            <input type="text" id="searchTable" class="form-control border-secondary border-opacity-25" placeholder="Ketik kata kunci...">
+                        </div>
+                        
+                        <!-- 2. Filter Pilar -->
+                        <select id="filterPillar" class="form-select form-select-sm w-auto fw-bold text-secondary shadow-sm">
+                            <option value="all">📁 Semua Pilar</option>
+                            <option value="Safety & Environment">Safety & Environment</option>
+                            <option value="Quality">Quality</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Plant">Plant</option>
+                            <option value="Kaizen">Kaizen</option>
+                        </select>
+                        
+                        <!-- 3. Smart Executive View -->
+                        <select id="smartView" class="form-select form-select-sm w-auto fw-bold shadow-sm" style="background-color: #f8f9fa;">
+                            <option value="all">👀 Semua Status (50 Item)</option>
+                            <option value="downgrade" class="text-danger fw-bold">📉 Fokus Anjlok (Gap Turun)</option>
+                            <option value="critical" class="text-danger fw-bold">🚨 Fokus Kritis (Lvl 1 & 2)</option>
+                            <option value="perfect" class="text-success fw-bold">🏆 Fokus Sempurna (Lvl 4 & 5)</option>
+                        </select>
+                        
+                        <!-- Tombol Refresh (Opsional) -->
+                        <button class="btn btn-sm btn-dark fw-bold shadow-sm" onclick="loadComparisonData()"><i class="fa-solid fa-rotate"></i></button>
+                    </div>
+                </div>
+                <!-- AKHIR SMART COMMAND BAR -->
+                
+                <div class="table-responsive" style="max-height: 500px;">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                        <thead class="table-light sticky-top text-center" style="font-size: 11px;">
+                            <tr>
+                                <th style="width: 5%;">No</th>
+                                <th style="width: 35%; text-align: left;">Pilar & Judul Item</th>
+                                <th style="width: 10%;">Lvl Mandiri</th>
+                                <th style="width: 10%;">Lvl Pre-Audit</th>
+                                <th style="width: 10%;">Lvl MMEU</th>
+                                <th style="width: 10%;">Gap Status</th>
+                                <th style="width: 20%;">Komentar Detail & Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compare-tbody">
+                            <tr><td colspan="7" class="text-center py-5">Memuat data komparasi...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL TINDAK LANJUT (ACTION PLAN) -->
+<div class="modal fade" id="modalAction" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-fire-extinguisher me-2"></i>Form Tindak Lanjut (Countermeasure)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formActionPlan">
+                <div class="modal-body p-4">
+                    <!-- Banner Informasi Item -->
+                    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger mb-4 shadow-sm">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-danger">Point #<span id="actItemNo"></span></span>
+                            <span class="fw-bold text-danger" id="actPillar">Pillar</span>
+                        </div>
+                        <p class="text-dark mb-0 fw-semibold" id="actDesc" style="font-size: 14px;">Deskripsi masalah...</p>
+                    </div>
+
+                    <input type="hidden" id="actHiddenNo" name="item_no">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small">Rencana / Tindakan Perbaikan <span class="text-danger">*</span></label>
+                        <textarea class="form-control border-secondary" id="actCountermeasure" name="countermeasure" rows="3" placeholder="Jelaskan tindakan perbaikan secara spesifik (5W1H)..." required></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark small">PIC (Penanggung Jawab) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="pic" placeholder="Contoh: Budi (Maintenance)" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark small">Target Selesai <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="due_date" required>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-light rounded border">
+                        <label class="form-label fw-bold text-dark small"><i class="fa-solid fa-camera text-primary me-1"></i> Upload Bukti Foto (Opsional)</label>
+                        <input class="form-control form-control-sm" type="file" id="actPhoto" name="photo" accept="image/*">
+                        
+                        <!-- Tempat Munculnya Preview Foto -->
+                        <div class="mt-3 text-center d-none" id="previewContainer">
+                            <p class="small text-muted mb-1">Pratinjau Gambar:</p>
+                            <img id="photoPreview" src="" alt="Preview" class="img-fluid rounded shadow-sm border border-2 border-white" style="max-height: 250px;">
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger fw-bold shadow-sm"><i class="fa-solid fa-paper-plane me-2"></i>Kirim Laporan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let radarChartObj = null;
+    let lineChartObj = null;
+
+    async function loadComparisonData() {
+        const year = document.getElementById('yearFilter').value;
+        
+        try {
+            const res = await fetch(`/api/mfa/compare?year=${year}`);
+            const result = await res.json();
+            
+            if (result.status !== 'success') {
+                alert(result.message);
+                return;
+            }
+
+            const d = result.data;
+
+            // ============================================
+            // 1. UPDATE KARTU METRIK & INSIGHT OTOMATIS
+            // ============================================
+            document.getElementById('totalMandiri').innerText = d.totals.mandiri;
+            document.getElementById('totalPre').innerText = d.totals.pre;
+            document.getElementById('totalMmeu').innerText = d.totals.mmeu;
+            // Rumus "Grand Total dibagi 50" (Menghasilkan Skor Rata-Rata Maks 4.00)
+            document.getElementById('avgMandiri').innerText = (d.totals.mandiri / 50).toFixed(2);
+            document.getElementById('avgPre').innerText = (d.totals.pre / 50).toFixed(2);
+            document.getElementById('avgMmeu').innerText = (d.totals.mmeu / 50).toFixed(2);
+            // Trend Mandiri vs Tahun Lalu
+            const diffMandiri = d.totals.mandiri - d.totals.prevMandiri;
+            let mandiriIcon = diffMandiri > 0 ? '<i class="fa-solid fa-caret-up text-success"></i>' : (diffMandiri < 0 ? '<i class="fa-solid fa-caret-down text-danger"></i>' : '<i class="fa-solid fa-caret-right text-secondary"></i>');
+            document.getElementById('trendMandiri').innerHTML = `${mandiriIcon} <span class="${diffMandiri < 0 ? 'text-danger' : (diffMandiri > 0 ? 'text-success' : 'text-secondary')}">${diffMandiri > 0 ? '+'+diffMandiri : diffMandiri} vs Tahun Lalu</span>`;
+            document.getElementById('descMandiri').innerText = diffMandiri === 0 ? "Belum ada pergerakan skor dari tahun lalu." : 
+                `Self-assessment pabrik ${diffMandiri > 0 ? 'meningkat' : 'menurun'} sebesar ${Math.abs(diffMandiri)} poin secara total dari baseline tahun sebelumnya.`;
+
+            // Trend Pre-Audit vs Mandiri
+            const diffPre = d.totals.pre - d.totals.mandiri;
+            let preIcon = diffPre > 0 ? '<i class="fa-solid fa-caret-up text-success"></i>' : (diffPre < 0 ? '<i class="fa-solid fa-caret-down text-danger"></i>' : '<i class="fa-solid fa-caret-right text-secondary"></i>');
+            document.getElementById('trendPre').innerHTML = `${preIcon} <span class="${diffPre < 0 ? 'text-danger' : (diffPre > 0 ? 'text-success' : 'text-secondary')}">${diffPre > 0 ? '+'+diffPre : diffPre} vs Mandiri</span>`;
+
+            // Trend MMEU vs Mandiri
+            const diffMmeu = d.totals.mmeu - d.totals.mandiri;
+            let mmeuIcon = diffMmeu > 0 ? '<i class="fa-solid fa-caret-up text-success"></i>' : (diffMmeu < 0 ? '<i class="fa-solid fa-caret-down text-danger"></i>' : '<i class="fa-solid fa-caret-right text-secondary"></i>');
+            document.getElementById('trendMmeu').innerHTML = `${mmeuIcon} <span class="${diffMmeu < 0 ? 'text-danger' : (diffMmeu > 0 ? 'text-success' : 'text-secondary')}">${diffMmeu > 0 ? '+'+diffMmeu : diffMmeu} vs Mandiri</span>`;
+
+            // Hitung Insight Pilar Paling Anjlok
+            let worstPrePillar = '', worstPreVal = 1000;
+            let worstMmeuPillar = '', worstMmeuVal = 1000;
+
+            for (const [pillar, val] of Object.entries(d.pillarRaw)) {
+                let gapPre = val.pre - val.mandiri;
+                let gapMmeu = val.mmeu - val.mandiri;
+                
+                if (gapPre < worstPreVal) { worstPreVal = gapPre; worstPrePillar = pillar; }
+                if (gapMmeu < worstMmeuVal) { worstMmeuVal = gapMmeu; worstMmeuPillar = pillar; }
+            }
+
+            document.getElementById('descPre').innerHTML = worstPreVal < 0 ? 
+                `<b>SECJ (Mr. Shogo)</b> banyak mengkoreksi ke bawah pada pilar <b>${worstPrePillar}</b> (Turun ${Math.abs(worstPreVal)} poin dari klaim Mandiri).` : "Secara umum, evaluasi SECJ selaras dengan Mandiri.";
+                
+            document.getElementById('descMmeu').innerHTML = worstMmeuVal < 0 ? 
+                `Kesenjangan persepsi (Blind Spot) terbesar pabrik berada di pilar <b>${worstMmeuPillar}</b> (Dipotong ${Math.abs(worstMmeuVal)} poin oleh MMEU).` : "Evaluasi akhir auditor Jepang sejalan dengan penilaian pabrik.";
+
+            // ============================================
+            // 2. RENDER CHART
+            // ============================================
+            if(radarChartObj) radarChartObj.destroy();
+            if(lineChartObj) lineChartObj.destroy();
+
+            // Radar Chart (Makro)
+            radarChartObj = new Chart(document.getElementById('gapRadarChart'), {
+                type: 'radar',
+                data: {
+                    labels: d.radar.labels,
+                    datasets: [
+                        { label: 'Mandiri (%)', data: d.radar.mandiri, backgroundColor: 'rgba(108, 117, 125, 0.1)', borderColor: '#6c757d', borderWidth: 2, borderDash: [5, 5] },
+                        { label: 'Pre-Audit (%)', data: d.radar.pre, backgroundColor: 'rgba(253, 126, 20, 0.1)', borderColor: '#fd7e14', borderWidth: 2 },
+                        { label: 'MMEU (%)', data: d.radar.mmeu, backgroundColor: 'rgba(13, 110, 253, 0.2)', borderColor: '#0d6efd', borderWidth: 2 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100 } } }
+            });
+
+            // ============================================
+            // Line Chart (Mikro - 50 Item)
+            // ============================================
+            const itemLabels = d.items.map(i => `Pt.${i.item_no}`);
+            
+            // KEMBALI MENGGUNAKAN LEVEL ASLI (TIDAK DIKURANGI)
+            const itemMandiri = d.items.map(i => i.level_mandiri);
+            const itemPre = d.items.map(i => i.level_pre_audit);
+            const itemMmeu = d.items.map(i => i.level_mmeu);
+
+            lineChartObj = new Chart(document.getElementById('itemGapChart'), {
+                type: 'line',
+                data: {
+                    labels: itemLabels,
+                    datasets: [
+                        { label: 'Mandiri (Level)', data: itemMandiri, borderColor: '#6c757d', backgroundColor: '#6c757d', borderWidth: 2, tension: 0.3, pointRadius: 3, borderDash: [4,4] },
+                        { label: 'Pre-Audit (Level)', data: itemPre, borderColor: '#fd7e14', backgroundColor: '#fd7e14', borderWidth: 2, tension: 0.3, pointRadius: 4 },
+                        { label: 'MMEU (Level)', data: itemMmeu, borderColor: '#0d6efd', backgroundColor: '#0d6efd', borderWidth: 3, tension: 0.3, pointRadius: 5 }
+                    ]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    // MAX DIKEMBALIKAN KE 5
+                    scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } }, 
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+           // ============================================
+            // 3. MENYIMPAN DATA UNTUK SMART FILTER
+            // ============================================
+            window.mfaItemsData = d.items; 
+            
+            // Panggil fungsi pembuat tabel awal (semua data)
+            renderTable(window.mfaItemsData);
+
+        } catch (err) {
+            console.error("Gagal load API:", err);
+            alert("Gagal menarik data komparasi.");
+        }
+    } // Akhir dari loadComparisonData()
+
+    // ============================================
+    // FUNGSI RENDER TABEL (YANG BISA DIPANGGIL BERULANG)
+    // ============================================
+    function renderTable(dataArray) {
+        const tbody = document.getElementById('compare-tbody');
+        tbody.innerHTML = '';
+
+        if (dataArray.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted fw-bold"><i class="fa-solid fa-folder-open mb-2 fs-3 d-block"></i>Tidak ada data yang cocok dengan filter.</td></tr>';
+            return;
+        }
+
+        dataArray.forEach(i => {
+            let gapBadge = '';
+            let phaseLabel = '';
+            let isDowngrade = false; // Flag detektor bahaya!
+
+            if (i.level_mmeu > 0) {
+                const gap = i.level_mmeu - i.level_mandiri;
+                if (gap < 0) {
+                    gapBadge = `<span class="badge bg-danger shadow-sm"><i class="fa-solid fa-angles-down"></i> ${gap} Lvl</span>`;
+                    isDowngrade = true; // Terdeteksi turun di final!
+                } else if (gap > 0) {
+                    gapBadge = `<span class="badge bg-success shadow-sm"><i class="fa-solid fa-angles-up"></i> +${gap} Lvl</span>`;
+                } else {
+                    gapBadge = `<span class="badge bg-primary shadow-sm"><i class="fa-solid fa-check-double"></i> Validated</span>`;
+                }
+                phaseLabel = '<small class="text-primary fw-bold d-block mt-1" style="font-size:9.5px;">FINAL (MMEU)</small>';
+            
+            } else if (i.level_pre_audit > 0) {
+                const gap = i.level_pre_audit - i.level_mandiri;
+                if (gap < 0) {
+                    gapBadge = `<span class="badge bg-warning text-dark"><i class="fa-solid fa-arrow-trend-down"></i> ${gap} Lvl</span>`;
+                    isDowngrade = true; // Terdeteksi turun di pre-audit!
+                } else if (gap > 0) {
+                    gapBadge = `<span class="badge bg-info text-dark"><i class="fa-solid fa-arrow-trend-up"></i> +${gap} Lvl</span>`;
+                } else {
+                    gapBadge = `<span class="badge bg-secondary"><i class="fa-solid fa-equals"></i> Selaras</span>`;
+                }
+                phaseLabel = '<small class="text-warning fw-bold d-block mt-1" style="font-size:9.5px;"><i class="fa-solid fa-user-tie"></i> SECJ GAP</small>';
+            
+            } else {
+                gapBadge = `<span class="badge bg-light text-muted border"><i class="fa-solid fa-hourglass-half me-1"></i>Menunggu</span>`;
+            }
+
+            const txtMandiri = i.level_mandiri > 0 ? `Lvl ${i.level_mandiri}` : '-';
+            const txtPre = i.level_pre_audit > 0 ? `Lvl ${i.level_pre_audit}` : `<span class="text-muted small" style="font-size:10px;">-</span>`;
+            const txtMmeu = i.level_mmeu > 0 ? `Lvl ${i.level_mmeu}` : `<span class="text-muted small" style="font-size:10px;">-</span>`;
+
+            // --- EKSEKUSI VISUAL JIKA TERJADI DOWNGRADE ---
+            const rowClass = isDowngrade ? 'bg-danger bg-opacity-10 border-danger' : '';
+            const titleColor = isDowngrade ? 'text-danger fw-bold' : 'text-dark fw-semibold';
+            const alertBadge = isDowngrade ? `<div class="mt-2"><span class="badge bg-danger badge-pulse shadow-sm"><i class="fa-solid fa-triangle-exclamation"></i> ACTION REQUIRED</span></div>` : '';
+            const btnClass = isDowngrade ? 'btn-danger shadow-sm' : 'btn-outline-dark';
+            const btnText = isDowngrade ? '<i class="fa-solid fa-fire me-1"></i> Cek Komentar' : '<i class="fa-solid fa-comments me-1"></i> Lihat';
+
+            tbody.innerHTML += `
+                <tr class="${rowClass}">
+                    <td class="text-center fw-bold ${isDowngrade ? 'text-danger' : ''}">${i.item_no}</td>
+                    <td>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary mb-1" style="font-size: 10px;">${i.pillar_name}</span><br>
+                        <span class="${titleColor}">${i.item_desc}</span>
+                        ${alertBadge}
+                    </td>
+                    <td class="text-center text-muted fw-bold">${txtMandiri}</td>
+                    <td class="text-center text-warning fw-bold">${txtPre}</td>
+                    <td class="text-center text-primary fw-bold">${txtMmeu}</td>
+                    <td class="text-center align-middle">${gapBadge}${phaseLabel}</td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-1">
+                            <button class="btn btn-sm ${btnClass} fw-bold" onclick="showKomentar(${i.item_no})">
+                                ${btnText}
+                            </button>
+                            <!-- Tombol Dinamis: Edit atau Action -->
+                            ${i.action_countermeasure 
+                                ? `<button class="btn btn-sm btn-primary fw-bold shadow-sm" onclick="showActionModal(${i.item_no})"><i class="fa-solid fa-pen-to-square"></i> Edit Action </button>`
+                                : `<button class="btn btn-sm ${isDowngrade ? 'btn-danger' : 'btn-outline-danger'} fw-bold shadow-sm" onclick="showActionModal(${i.item_no})"><i class="fa-solid fa-person-digging"></i> Action</button>`
+                            }
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // ============================================
+    // FUNGSI SMART FILTERING (Merespons ketikan & pilihan)
+    // ============================================
+    function applySmartFilters() {
+        let filtered = window.mfaItemsData; // Ambil data utuh
+        
+        // 1. Filter Pencarian Teks
+        const searchTerm = document.getElementById('searchTable').value.toLowerCase();
+        if (searchTerm) {
+            filtered = filtered.filter(i => 
+                i.item_desc.toLowerCase().includes(searchTerm) || 
+                i.pillar_name.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        // 2. Filter Kategori Pilar
+        const pillar = document.getElementById('filterPillar').value;
+        if (pillar !== 'all') {
+            filtered = filtered.filter(i => i.pillar_name === pillar);
+        }
+
+        // 3. Filter Eksekutif (Smart View)
+        const view = document.getElementById('smartView').value;
+        if (view === 'downgrade') {
+            // Cari yang Gap-nya negatif (Turun) di SECJ atau MMEU
+            filtered = filtered.filter(i => {
+                const finalLvl = i.level_mmeu > 0 ? i.level_mmeu : (i.level_pre_audit > 0 ? i.level_pre_audit : 0);
+                return finalLvl > 0 && finalLvl < i.level_mandiri;
+            });
+        } else if (view === 'critical') {
+            // Cari yang skor finalnya 1 atau 2
+            filtered = filtered.filter(i => {
+                const finalLvl = i.level_mmeu > 0 ? i.level_mmeu : (i.level_pre_audit > 0 ? i.level_pre_audit : i.level_mandiri);
+                return finalLvl === 1 || finalLvl === 2;
+            });
+        } else if (view === 'perfect') {
+            // Cari yang skor finalnya 4 atau 5
+            filtered = filtered.filter(i => {
+                const finalLvl = i.level_mmeu > 0 ? i.level_mmeu : (i.level_pre_audit > 0 ? i.level_pre_audit : i.level_mandiri);
+                return finalLvl === 4 || finalLvl === 5;
+            });
+        }
+
+        // Gambar ulang tabelnya!
+        renderTable(filtered);
+    }
+
+    // Event Listener untuk memicu filter tiap kali input diketik / diubah
+    document.getElementById('searchTable').addEventListener('input', applySmartFilters);
+    document.getElementById('filterPillar').addEventListener('change', applySmartFilters);
+    document.getElementById('smartView').addEventListener('change', applySmartFilters);
+    // ============================================
+    // FUNGSI MEMBUKA MODAL DETAIL (KOMENTAR + ACTION)
+    // ============================================
+    function showKomentar(noItem) {
+        const item = window.mfaItemsData.find(i => i.item_no === noItem);
+        if(!item) return;
+
+        // 1. Isi Data Komentar
+        document.getElementById('modalKomTitle').innerText = `Detail Poin #${item.item_no}`;
+        document.getElementById('txtKomPre').innerText = item.comment_pre_audit || "Tidak ada temuan / komentar.";
+        document.getElementById('txtKomIndo').innerText = item.comment_indo || "Tidak ada komentar (Indo).";
+        document.getElementById('txtKomJepang').innerText = item.comment_jepang || "Tidak ada komentar (Jepang).";
+
+        // 2. Isi Data Action Plan (Jika Ada)
+        if (item.action_countermeasure) {
+            document.getElementById('actPlanView').classList.remove('d-none');
+            document.getElementById('actPlanEmpty').classList.add('d-none');
+            
+            document.getElementById('actCmView').innerText = item.action_countermeasure;
+            document.getElementById('actPicView').innerText = item.action_pic;
+            
+            // Format Tanggal Due Date agar rapi (DD/MM/YYYY)
+            let dueText = '-';
+            if (item.action_due_date) {
+                const d = new Date(item.action_due_date);
+                dueText = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+            document.getElementById('actDueView').innerText = dueText;
+            
+            // Warna Status & Tombol Aksi
+            const statusBadge = document.getElementById('actStatusView');
+            const validasiContainer = document.getElementById('btnValidasiContainer');
+
+            if (item.action_status === 'CLOSED') {
+                statusBadge.className = 'badge bg-success border shadow-sm';
+                statusBadge.innerHTML = '✅ CLOSED';
+                // Jika sudah di-close, kita tetap beri tombol hapus untuk jaga-jaga kalau mau di-reset
+                validasiContainer.innerHTML = `<button class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="hapusActionPlan(${item.item_no})"><i class="fa-solid fa-trash-can me-1"></i> Hapus</button>`; 
+            } else {
+                statusBadge.className = 'badge bg-warning text-dark border shadow-sm';
+                statusBadge.innerHTML = '⭕ OPEN';
+                // Munculkan tombol Hapus bersanding dengan tombol Validasi
+                validasiContainer.innerHTML = `
+                    <button class="btn btn-sm btn-outline-danger fw-bold shadow-sm me-1" onclick="hapusActionPlan(${item.item_no})"><i class="fa-solid fa-trash-can"></i></button>
+                    <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="validasiActionPlan(${item.item_no})"><i class="fa-solid fa-check-double me-1"></i> Validasi (Close)</button>
+                `;
+            }
+
+            // Munculkan Foto Jika Ada
+            if (item.action_photo) {
+                document.getElementById('actPhotoWrapper').classList.remove('d-none');
+                document.getElementById('actPhotoView').src = item.action_photo;
+            } else {
+                document.getElementById('actPhotoWrapper').classList.add('d-none');
+            }
+
+        } else {
+            // Sembunyikan form detail jika belum ada data action
+            document.getElementById('actPlanView').classList.add('d-none');
+            document.getElementById('actPlanEmpty').classList.remove('d-none');
+        }
+
+        new bootstrap.Modal(document.getElementById('modalKomentar')).show();
+    }
+
+    // Eksekusi saat halaman pertama dimuat
+    window.onload = loadComparisonData;
+
+    // ============================================
+    // FUNGSI VALIDASI / CLOSE ACTION PLAN
+    // ============================================
+    async function validasiActionPlan(noItem) {
+        // Konfirmasi agar tidak salah klik
+        const isConfirm = confirm(`Yakin ingin memvalidasi dan me-CLOSE point #${noItem}?`);
+        if (!isConfirm) return;
+
+        const year = document.getElementById('yearFilter').value;
+        const btn = document.querySelector('#btnValidasiContainer button');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Proses...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/mfa/action-plan/close', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ year: year, item_no: noItem })
+            });
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                alert(`✅ ${result.message}`);
+                bootstrap.Modal.getInstance(document.getElementById('modalKomentar')).hide();
+                // Refresh data tabel agar statusnya berubah di memori
+                loadComparisonData(); 
+            } else {
+                alert(`❌ Gagal: ${result.message}`);
+                btn.innerHTML = '<i class="fa-solid fa-check-double me-1"></i> Validasi (Close)';
+                btn.disabled = false;
+            }
+        } catch (err) {
+            console.error(err);
+            alert("❌ Terjadi kesalahan koneksi.");
+            btn.innerHTML = '<i class="fa-solid fa-check-double me-1"></i> Validasi (Close)';
+            btn.disabled = false;
+        }
+    }
+
+    // ============================================
+    // FUNGSI HAPUS ACTION PLAN (RESET DATA)
+    // ============================================
+    async function hapusActionPlan(noItem) {
+        // Beri peringatan sebelum menghapus
+        const isConfirm = confirm(`⚠️ PERINGATAN!\nYakin ingin MENGHAPUS data Tindak Lanjut & Foto pada Poin #${noItem}?`);
+        if (!isConfirm) return;
+
+        const year = document.getElementById('yearFilter').value;
+
+        try {
+            const res = await fetch('/api/mfa/action-plan/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ year: year, item_no: noItem })
+            });
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                alert(`✅ ${result.message}`);
+                bootstrap.Modal.getInstance(document.getElementById('modalKomentar')).hide();
+                // Refresh data tabel
+                loadComparisonData(); 
+            } else {
+                alert(`❌ Gagal: ${result.message}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("❌ Terjadi kesalahan koneksi.");
+        }
+    }
+    
+    // ============================================
+    // FUNGSI UNTUK MEMBUKA MODAL ACTION PLAN (INPUT & EDIT)
+    // ============================================
+    function showActionModal(noItem) {
+        const item = window.mfaItemsData.find(i => i.item_no === noItem);
+        if(!item) return;
+
+        // 1. Isi identitas poin di Header Modal
+        document.getElementById('actItemNo').innerText = item.item_no;
+        document.getElementById('actPillar').innerText = item.pillar_name;
+        document.getElementById('actDesc').innerText = item.item_desc;
+        document.getElementById('actHiddenNo').value = item.item_no;
+        
+        const form = document.getElementById('formActionPlan');
+        const previewContainer = document.getElementById('previewContainer');
+        const photoPreview = document.getElementById('photoPreview');
+        const btnSubmit = form.querySelector('button[type="submit"]');
+
+        form.reset(); // Bersihkan sisa inputan file atau teks sebelumnya
+
+        // 2. CEK MODE: EDIT atau BARU?
+        if (item.action_countermeasure) {
+            // --- MODE EDIT (Suntikkan Data Lama) ---
+            document.getElementById('actCountermeasure').value = item.action_countermeasure;
+            form.querySelector('input[name="pic"]').value = item.action_pic;
+            
+            // Format tanggal dari SQL ke input date (YYYY-MM-DD)
+            if (item.action_due_date) {
+                const d = new Date(item.action_due_date);
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                form.querySelector('input[name="due_date"]').value = `${yyyy}-${mm}-${dd}`;
+            }
+
+            // Panggil Foto Lama
+            if (item.action_photo) {
+                photoPreview.src = item.action_photo;
+                previewContainer.classList.remove('d-none');
+            } else {
+                photoPreview.src = '';
+                previewContainer.classList.add('d-none');
+            }
+
+            // Ubah wajah tombol submit
+            btnSubmit.innerHTML = '<i class="fa-solid fa-save me-2"></i>Update Laporan';
+            btnSubmit.className = 'btn btn-primary fw-bold shadow-sm';
+
+        } else {
+            // --- MODE BARU (Kosongkan Semua) ---
+            photoPreview.src = '';
+            previewContainer.classList.add('d-none');
+            
+            // Ubah wajah tombol submit
+            btnSubmit.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Kirim Laporan';
+            btnSubmit.className = 'btn btn-danger fw-bold shadow-sm';
+        }
+
+        // Tampilkan modal
+        new bootstrap.Modal(document.getElementById('modalAction')).show();
+    }
+
+    // ============================================
+    // EFEK WOW: LIVE PREVIEW BUKTI FOTO
+    // ============================================
+    document.getElementById('actPhoto').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('photoPreview').src = event.target.result;
+                document.getElementById('previewContainer').classList.remove('d-none');
+            }
+            reader.readAsDataURL(file); // Mengubah file menjadi data visual (Base64)
+        } else {
+            document.getElementById('previewContainer').classList.add('d-none');
+        }
+    });
+
+    // ============================================
+    // PROSES SUBMIT ACTION PLAN KE SERVER
+    // ============================================
+    document.getElementById('formActionPlan').addEventListener('submit', async function(e) {
+        e.preventDefault(); 
+        
+        const btnSubmit = this.querySelector('button[type="submit"]');
+        const originalText = btnSubmit.innerHTML;
+        
+        // Efek loading pada tombol
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
+        btnSubmit.disabled = true;
+
+        try {
+            // Ambil data dari form
+            const year = document.getElementById('yearFilter').value;
+            const item_no = document.getElementById('actHiddenNo').value;
+            const countermeasure = document.getElementById('actCountermeasure').value;
+            const pic = this.querySelector('input[name="pic"]').value;
+            const due_date = this.querySelector('input[name="due_date"]').value;
+            
+            // Ambil data foto (jika ada preview, ambil src Base64-nya)
+            let photo_base64 = '';
+            const previewContainer = document.getElementById('previewContainer');
+            if (!previewContainer.classList.contains('d-none')) {
+                photo_base64 = document.getElementById('photoPreview').src;
+            }
+
+            // Rakit data menjadi JSON
+            const payload = { year, item_no, countermeasure, pic, due_date, photo_base64 };
+
+            // Tembakkan ke Server Node.js
+            const res = await fetch('/api/mfa/action-plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                alert(`✅ ${result.message}`);
+                bootstrap.Modal.getInstance(document.getElementById('modalAction')).hide();
+                // (Opsional) Refresh otomatis tabel jika dibutuhkan
+                // loadComparisonData(); 
+            } else {
+                alert(`❌ Gagal menyimpan: ${result.message}`);
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert("❌ Terjadi kesalahan koneksi ke server.");
+        } finally {
+            // Kembalikan tombol ke kondisi semula
+            btnSubmit.innerHTML = originalText;
+            btnSubmit.disabled = false;
+        }
+    });
+</script>
+<!-- MODAL KOMENTAR DETAIL -->
+<div class="modal fade" id="modalKomentar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold" id="modalKomTitle">Detail Komentar</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- AREA KOMENTAR AUDITOR -->
+                <div class="mb-3">
+                    <span class="badge bg-warning text-dark mb-1">Pre-Audit (SECJ)</span>
+                    <div class="p-2 border rounded bg-light" id="txtKomPre" style="font-size: 13px;">-</div>
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-primary mb-1">MMEU (Indo)</span>
+                    <div class="p-2 border rounded bg-light" id="txtKomIndo" style="font-size: 13px;">-</div>
+                </div>
+                <div class="mb-4">
+                    <span class="badge bg-danger mb-1">MMEU (Jepang)</span>
+                    <div class="p-2 border rounded bg-light" id="txtKomJepang" style="font-size: 13px;">-</div>
+                </div>
+
+                <hr class="border-secondary border-opacity-50">
+
+                <!-- AREA STATUS TINDAK LANJUT -->
+                <h6 class="fw-bold text-dark"><i class="fa-solid fa-person-digging text-danger me-2"></i>Status Tindak Lanjut</h6>
+                
+                <!-- Jika Ada Data -->
+                <div id="actPlanView" class="d-none">
+                    <!-- HEADER STATUS & TOMBOL VALIDASI -->
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-25">
+                        <div>
+                            <span id="actStatusView" class="badge bg-warning text-dark border shadow-sm">⭕ OPEN</span>
+                            <small class="text-muted fw-bold ms-2">Target: <span id="actDueView" class="text-danger">-</span></small>
+                        </div>
+                        <div id="btnValidasiContainer">
+                            <!-- Tombol Validasi akan disuntikkan via JS di sini -->
+                        </div>
+                    </div>
+                    
+                    <p class="small mb-1 fw-bold">PIC: <span id="actPicView" class="text-primary">-</span></p>
+                    <div class="p-3 border border-danger border-opacity-25 rounded bg-danger bg-opacity-10 mb-3">
+                        <p class="small mb-0 text-dark fw-semibold" id="actCmView">-</p>
+                    </div>
+                    <!-- Area Tampil Foto -->
+                    <div id="actPhotoWrapper" class="text-center d-none bg-light p-2 rounded border">
+                        <small class="text-muted d-block mb-2"><i class="fa-solid fa-image me-1"></i>Bukti Visual</small>
+                        <img id="actPhotoView" src="" class="img-fluid rounded shadow-sm border border-2 border-white" style="max-height: 200px;">
+                    </div>
+                </div>
+
+                <!-- Jika Kosong -->
+                <div id="actPlanEmpty" class="text-center py-3 bg-light rounded border border-light-subtle">
+                    <p class="small text-muted fst-italic mb-0">Belum ada Countermeasure yang diinput.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
